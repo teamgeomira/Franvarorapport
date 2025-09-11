@@ -1,0 +1,1881 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkolaRaport - Frånvaro hantering</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/docx/7.8.1/docx.js"></script>
+    <!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <!-- Chart.js for statistics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary-color: #3f51b5;
+            --secondary-color: #f50057;
+            --light-bg: #f8f9fa;
+            --dark-text: #333;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light-bg);
+            color: var(--dark-text);
+            padding-top: 20px;
+            padding-bottom: 50px;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), #7986cb);
+            color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        
+        .user-info {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .user-email {
+            margin-right: 15px;
+            font-size: 0.9rem;
+        }
+        
+        .auth-section {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
+        }
+        
+        .stats-card {
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+            height: 100%;
+        }
+        
+        .stats-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-danger {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+        
+        .btn-export {
+            background-color: #4caf50;
+            border-color: #4caf50;
+            color: white;
+        }
+        
+        .table-responsive {
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .table thead {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .month-header {
+            background-color: #e8eaf6;
+            font-weight: bold;
+            padding: 10px;
+            border-left: 4px solid var(--primary-color);
+            margin-top: 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .month-header:hover {
+            background-color: #d5d9f0;
+        }
+        
+        .month-content {
+            display: block;
+        }
+        
+        .month-content.collapsed {
+            display: none;
+        }
+        
+        .action-buttons .btn {
+            margin-right: 5px;
+        }
+        
+        .footer {
+            margin-top: 30px;
+            padding: 20px;
+            text-align: center;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(63, 81, 181, 0.25);
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 20px;
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+        
+        .context-menu {
+            display: none;
+            position: absolute;
+            background-color: white;
+            border: 1px solid #ccc;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+        
+        .context-menu-item {
+            padding: 8px 15px;
+            cursor: pointer;
+        }
+        
+        .context-menu-item:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .export-modal .form-group {
+            margin-bottom: 15px;
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .user-info {
+                position: static;
+                justify-content: center;
+                margin-top: 15px;
+            }
+            
+            .stats-card {
+                margin-bottom: 15px;
+            }
+            
+            .chart-container {
+                height: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Toast notifications -->
+        <div class="toast-container"></div>
+        
+        <!-- Context menu -->
+        <div id="contextMenu" class="context-menu">
+            <div class="context-menu-item" data-action="copy">Kopiera</div>
+            <div class="context-menu-item" data-action="pdf">Exportera till PDF</div>
+        </div>
+        
+        <!-- Header -->
+        <div class="header text-center">
+            <h1><i class="fas fa-school me-2"></i>SkolaRaport - Frånvaro hantering</h1>
+            <p class="lead">Hantera och rapportera elevers frånvaro på ett effektivt sätt</p>
+            
+            <!-- User info section -->
+            <div class="user-info" id="userInfo" style="display: none;">
+                <span class="user-email" id="userEmail"></span>
+                <button id="manageStudentsBtn" class="btn btn-sm btn-outline-light me-2">
+                    <i class="fas fa-users me-1"></i> Hantera elever
+                </button>
+                <button id="logoutBtn" class="btn btn-sm btn-outline-light">
+                    <i class="fas fa-sign-out-alt me-1"></i> Logga ut
+                </button>
+            </div>
+        </div>
+        
+        <!-- Authentication Section (shown when not logged in) -->
+        <div id="authSection" class="auth-section">
+            <div class="row">
+                <div class="col-md-6">
+                    <h3>Logga in</h3>
+                    <form id="loginForm">
+                        <div class="mb-3">
+                            <label for="loginEmail" class="form-label">E-post</label>
+                            <input type="email" class="form-control" id="loginEmail" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="loginPassword" class="form-label">Lösenord</label>
+                            <input type="password" class="form-control" id="loginPassword" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Logga in</button>
+                    </form>
+                </div>
+                <div class="col-md-6">
+                    <h3>Registrera ny användare</h3>
+                    <form id="registerForm">
+                        <div class="mb-3">
+                            <label for="registerName" class="form-label">Namn</label>
+                            <input type="text" class="form-control" id="registerName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="registerEmail" class="form-label">E-post</label>
+                            <input type="email" class="form-control" id="registerEmail" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="registerPassword" class="form-label">Lösenord</label>
+                            <input type="password" class="form-control" id="registerPassword" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirmPassword" class="form-label">Bekräfta lösenord</label>
+                            <input type="password" class="form-control" id="confirmPassword" required>
+                        </div>
+                        <button type="submit" class="btn btn-success">Registrera</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Application Section (shown when logged in) -->
+        <div id="appSection" style="display: none;">
+            <!-- Controls and Filters -->
+            <div class="row mb-4">
+                <div class="col-md-3 mb-2">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                        <select id="yearFilter" class="form-select">
+                            <option value="all">Alla år</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-2">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-calendar"></i></span>
+                        <input type="month" id="monthRangeFilter" class="form-control" value="">
+                    </div>
+                </div>
+                <div class="col-md-3 mb-2">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        <input type="text" id="searchInput" class="form-control" placeholder="Sök elev, orsak eller anteckningar...">
+                    </div>
+                </div>
+                <div class="col-md-3 mb-2">
+                    <button id="addAbsenceBtn" class="btn btn-primary w-100">
+                        <i class="fas fa-plus me-1"></i> Lägg till frånvaro
+                    </button>
+                </div>
+            </div>
+            
+            <div class="row mb-4">
+                <div class="col-md-6 mb-2">
+                    <div class="d-flex">
+                        <button id="exportPdfBtn" class="btn btn-export me-2 w-50">
+                            <i class="fas fa-file-pdf me-1"></i> PDF
+                        </button>
+                        <button id="exportWordBtn" class="btn btn-export w-50">
+                            <i class="fas fa-file-word me-1"></i> Word
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-2">
+                    <div class="form-check form-switch mt-2">
+                        <input class="form-check-input" type="checkbox" id="realTimeUpdate" checked>
+                        <label class="form-check-label" for="realTimeUpdate">Realtidsuppdatering</label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Statistics -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="stats-card card bg-primary text-white">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Total frånvaro</h5>
+                            <h2 id="totalAbsences">0</h2>
+                            <p class="card-text">dagar</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card card bg-info text-white">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Denna månad</h5>
+                            <h2 id="monthAbsences">0</h2>
+                            <p class="card-text">dagar</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card card bg-warning text-dark">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Förkylning</h5>
+                            <h2 id="sicknessAbsences">0</h2>
+                            <p class="card-text">dagar</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card card bg-success text-white">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Denna termin</h5>
+                            <h2 id="termAbsences">0</h2>
+                            <p class="card-text">dagar</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Charts -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="chart-container">
+                        <canvas id="reasonChart"></canvas>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="chart-container">
+                        <canvas id="monthlyTrendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Absence Records -->
+            <div class="row">
+                <div class="col-12">
+                    <div id="absencesContainer">
+                        <!-- Records will be grouped by month here -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <div class="footer">
+                <button id="homeButton" class="btn btn-secondary">
+                    <i class="fas fa-home me-1"></i> Tillbaka till huvudsidan
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Add/Edit Absence Modal -->
+    <div class="modal fade" id="absenceModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Lägg till frånvaro</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="absenceForm">
+                        <input type="hidden" id="absenceId">
+                        <div class="mb-3">
+                            <label for="studentName" class="form-label">Elevens namn</label>
+                            <select class="form-select" id="studentName" required>
+                                <option value="">Välj elev</option>
+                                <!-- Students will be populated here -->
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="absenceDate" class="form-label">Datum</label>
+                            <input type="date" class="form-control" id="absenceDate" required>
+                        </div>
+						<div class="mb-3">
+							<label for="absenceReason" class="form-label">Orsak</label>
+							<select class="form-select" id="absenceReason" required>
+								<option value="Förkylning">Förkylning</option>
+								<option value="Familjeskäl">Familjeskäl</option>
+								<option value="Övrigt">Övrigt</option>
+								<option value="Läkarbesök">Läkarbesök</option>
+								<option value="Tandläkarbesök">Tandläkarbesök</option>
+								<option value="Studier">Studier</option>
+								<option value="Resa">Resa</option>
+								<option value="Sjukdom">Sjukdom</option>
+								<option value="Begravning">Begravning</option>
+								<option value="Flytt">Flytt</option>
+							</select>
+						</div>
+
+                        <div class="mb-3">
+                            <label for="absenceNotes" class="form-label">Anteckningar</label>
+                            <textarea class="form-control" id="absenceNotes" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Avbryt</button>
+                    <button type="button" class="btn btn-primary" id="saveAbsenceBtn">Spara</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manage Students Modal -->
+    <div class="modal fade" id="studentsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Hantera elever</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="studentForm">
+                        <div class="mb-3">
+                            <label for="newStudentName" class="form-label">Lägg till ny elev</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="newStudentName" placeholder="Elevens namn">
+                                <button type="button" class="btn btn-primary" id="addStudentBtn">Lägg till</button>
+                            </div>
+                        </div>
+                    </form>
+                    <hr>
+                    <h6>Befintliga elever</h6>
+                    <ul class="list-group" id="studentsList">
+                        <!-- Students will be listed here -->
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Stäng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Options Modal -->
+    <div class="modal fade" id="exportModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Exportera rapporter</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body export-modal">
+                    <div class="mb-3">
+                        <label for="exportStartDate" class="form-label">Startdatum</label>
+                        <input type="date" class="form-control" id="exportStartDate">
+                    </div>
+                    <div class="mb-3">
+                        <label for="exportEndDate" class="form-label">Slutdatum</label>
+                        <input type="date" class="form-control" id="exportEndDate">
+                    </div>
+                    <div class="mb-3">
+                        <label for="exportYearFilter" class="form-label">År</label>
+                        <select id="exportYearFilter" class="form-select">
+                            <option value="all">Alla år</option>
+                        </select>
+                    </div>
+					<div class="mb-3">
+						<label for="exportReasonFilter" class="form-label">Orsak</label>
+						<select id="exportReasonFilter" class="form-select">
+							<option value="all">Alla orsaker</option>
+							<option value="Förkylning">Förkylning</option>
+							<option value="Familjeskäl">Familjeskäl</option>
+							<option value="Övrigt">Övrigt</option>
+							<option value="Läkarbesök">Läkarbesök</option>
+							<option value="Tandläkarbesök">Tandläkarbesök</option>
+							<option value="Studier">Studier</option>
+							<option value="Resa">Resa</option>
+							<option value="Sjukdom">Sjukdom</option>
+							<option value="Begravning">Begravning</option>
+							<option value="Flytt">Flytt</option>
+						</select>
+					</div>
+
+                    <div class="mb-3">
+                        <label for="exportSortBy" class="form-label">Sortera efter</label>
+                        <select id="exportSortBy" class="form-select">
+                            <option value="date">Datum</option>
+                            <option value="student">Elev</option>
+                            <option value="reason">Orsak</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="exportSortOrder" class="form-label">Sorteringsordning</label>
+                        <select id="exportSortOrder" class="form-select">
+                            <option value="asc">Stigande</option>
+                            <option value="desc">Fallande</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Avbryt</button>
+                    <button type="button" class="btn btn-primary" id="confirmExportBtn">Exportera</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDCkm9d4vIa9H52dCIMgyiGDcXWh9y3Ruk",
+            authDomain: "skolaraport.firebaseapp.com",
+            databaseURL: "https://skolaraport-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "skolaraport",
+            storageBucket: "skolaraport.appspot.com",
+            messagingSenderId: "720242828475",
+            appId: "1:720242828475:web:8a7c8b3c7b3c7b3c7b3c7b"
+        };
+        
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const auth = firebase.auth();
+        
+        // Chart instances
+        let reasonChart = null;
+        let monthlyTrendChart = null;
+        
+        // Current user
+        let currentUser = null;
+        
+        // Export type
+        let currentExportType = '';
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize the application
+            initApp();
+            
+            // Set up event listeners
+            document.getElementById('addAbsenceBtn').addEventListener('click', openAddAbsenceModal);
+            document.getElementById('saveAbsenceBtn').addEventListener('click', saveAbsence);
+            document.getElementById('homeButton').addEventListener('click', goToHomePage);
+            document.getElementById('exportPdfBtn').addEventListener('click', () => openExportModal('pdf'));
+            document.getElementById('exportWordBtn').addEventListener('click', () => openExportModal('word'));
+            document.getElementById('yearFilter').addEventListener('change', filterRecords);
+            document.getElementById('monthRangeFilter').addEventListener('change', filterRecords);
+            document.getElementById('searchInput').addEventListener('input', filterRecords);
+            document.getElementById('realTimeUpdate').addEventListener('change', toggleRealTimeUpdates);
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+            document.getElementById('manageStudentsBtn').addEventListener('click', openManageStudentsModal);
+            document.getElementById('addStudentBtn').addEventListener('click', addStudent);
+            document.getElementById('confirmExportBtn').addEventListener('click', confirmExport);
+            
+            // Auth form listeners
+            document.getElementById('loginForm').addEventListener('submit', login);
+            document.getElementById('registerForm').addEventListener('submit', register);
+            
+            // Set current month as default filter
+            const now = new Date();
+            const currentMonth = now.toISOString().slice(0, 7);
+            document.getElementById('monthRangeFilter').value = currentMonth;
+            
+            // Set default export date range to current month
+            const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+            const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+            document.getElementById('exportStartDate').valueAsDate = firstDay;
+            document.getElementById('exportEndDate').valueAsDate = lastDay;
+            
+            // Context menu event listeners
+            document.addEventListener('contextmenu', handleContextMenu);
+            document.addEventListener('click', hideContextMenu);
+            
+            // Populate year filter
+            populateYearFilter();
+        });
+        
+        function initApp() {
+            // Listen for auth state changes
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    // User is signed in
+                    currentUser = user;
+                    showAppSection();
+                    
+                    if (!user.emailVerified) {
+                        showToast('Vänligen verifiera din e-postadress. Vi har skickat ett verifieringsmail.', 'warning');
+                        sendEmailVerification();
+                    }
+                    
+                    // Load absences and students from Firebase
+                    loadAbsences();
+                    loadStudents();
+                } else {
+                    // User is signed out
+                    currentUser = null;
+                    showAuthSection();
+                }
+            });
+        }
+        
+        function showAuthSection() {
+            document.getElementById('authSection').style.display = 'block';
+            document.getElementById('appSection').style.display = 'none';
+            document.getElementById('userInfo').style.display = 'none';
+        }
+        
+        function showAppSection() {
+            document.getElementById('authSection').style.display = 'none';
+            document.getElementById('appSection').style.display = 'block';
+            document.getElementById('userInfo').style.display = 'flex';
+            document.getElementById('userEmail').textContent = currentUser.email;
+        }
+        
+        function login(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            auth.signInWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    // Signed in
+                    showToast('Inloggning lyckades!', 'success');
+                })
+                .catch((error) => {
+                    showToast('Inloggning misslyckades: ' + error.message, 'danger');
+                });
+        }
+        
+        function register(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('registerName').value;
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            if (password !== confirmPassword) {
+                showToast('Lösenorden matchar inte', 'danger');
+                return;
+            }
+            
+            auth.createUserWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    // Signed up
+                    const user = userCredential.user;
+                    
+                    // Update user profile with name
+                    return user.updateProfile({
+                        displayName: name
+                    }).then(() => {
+                        // Send verification email
+                        return sendEmailVerification();
+                    });
+                })
+                .then(() => {
+                    showToast('Registrering lyckades! Verifieringsmail skickat.', 'success');
+                    document.getElementById('registerForm').reset();
+                })
+                .catch((error) => {
+                    showToast('Registrering misslyckades: ' + error.message, 'danger');
+                });
+        }
+        
+        function sendEmailVerification() {
+            return auth.currentUser.sendEmailVerification()
+                .then(() => {
+                    console.log('Verification email sent');
+                });
+        }
+        
+        function logout() {
+            auth.signOut()
+                .then(() => {
+                    showToast('Utloggning lyckades', 'success');
+                })
+                .catch((error) => {
+                    showToast('Utloggning misslyckades: ' + error.message, 'danger');
+                });
+        }
+        
+        function loadAbsences() {
+            if (!currentUser) return;
+            
+            // Listen for changes in Firebase
+            const absencesRef = database.ref('users/' + currentUser.uid + '/absences');
+            
+            absencesRef.on('value', (snapshot) => {
+                const absencesData = snapshot.val();
+                let absences = [];
+                
+                if (absencesData) {
+                    // Convert Firebase object to array
+                    absences = Object.keys(absencesData).map(key => {
+                        return {
+                            id: key,
+                            ...absencesData[key]
+                        };
+                    });
+                }
+                
+                // Display the absences
+                displayAbsences(absences);
+                
+                // Update statistics
+                updateStatistics(absences);
+                
+                // Update charts
+                updateCharts(absences);
+            }, (error) => {
+                showToast('Error loading data: ' + error.message, 'danger');
+            });
+        }
+        
+        function loadStudents() {
+            if (!currentUser) return;
+            
+            const studentsRef = database.ref('users/' + currentUser.uid + '/students');
+            
+            studentsRef.on('value', (snapshot) => {
+                const studentsData = snapshot.val();
+                let students = [];
+                
+                if (studentsData) {
+                    // Convert Firebase object to array
+                    students = Object.keys(studentsData).map(key => {
+                        return {
+                            id: key,
+                            ...studentsData[key]
+                        };
+                    });
+                }
+                
+                // Update student dropdown
+                updateStudentDropdown(students);
+                
+                // Update students list in management modal
+                updateStudentsList(students);
+            });
+        }
+        
+        function updateStudentDropdown(students) {
+            const studentDropdown = document.getElementById('studentName');
+            // Keep the first option (placeholder)
+            const placeholder = studentDropdown.options[0];
+            studentDropdown.innerHTML = '';
+            studentDropdown.appendChild(placeholder);
+            
+            // Add students to dropdown
+            students.forEach(student => {
+                const option = document.createElement('option');
+                option.value = student.name;
+                option.textContent = student.name;
+                studentDropdown.appendChild(option);
+            });
+        }
+        
+        function updateStudentsList(students) {
+            const studentsList = document.getElementById('studentsList');
+            studentsList.innerHTML = '';
+            
+            if (students.length === 0) {
+                studentsList.innerHTML = '<li class="list-group-item text-center">Inga elever registrerade</li>';
+                return;
+            }
+            
+            students.forEach(student => {
+                const listItem = document.createElement('li');
+                listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+                listItem.innerHTML = `
+                    ${student.name}
+                    <button class="btn btn-sm btn-outline-danger delete-student-btn" data-id="${student.id}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                `;
+                studentsList.appendChild(listItem);
+            });
+            
+            // Add event listeners to delete buttons
+            setTimeout(() => {
+                document.querySelectorAll('.delete-student-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const id = e.currentTarget.getAttribute('data-id');
+                        deleteStudent(id);
+                    });
+                });
+            }, 0);
+        }
+        
+        function openManageStudentsModal() {
+            const modal = new bootstrap.Modal(document.getElementById('studentsModal'));
+            modal.show();
+        }
+        
+        function addStudent() {
+            const studentName = document.getElementById('newStudentName').value.trim();
+            
+            if (!studentName) {
+                showToast('Vänligen ange ett namn för eleven', 'warning');
+                return;
+            }
+            
+            if (!currentUser) {
+                showToast('Du måste logga in för att lägga till elever', 'warning');
+                return;
+            }
+            
+            const studentData = {
+                name: studentName,
+                createdAt: new Date().toISOString()
+            };
+            
+            database.ref('users/' + currentUser.uid + '/students').push(studentData)
+                .then(() => {
+                    showToast('Elev tillagd!', 'success');
+                    document.getElementById('newStudentName').value = '';
+                })
+                .catch((error) => {
+                    showToast('Error adding student: ' + error.message, 'danger');
+                });
+        }
+        
+        function deleteStudent(id) {
+            if (!currentUser) return;
+            
+            if (confirm('Är du säker på att du vill ta bort denna elev?')) {
+                database.ref('users/' + currentUser.uid + '/students/' + id).remove()
+                    .then(() => {
+                        showToast('Elev borttagen!', 'success');
+                    })
+                    .catch((error) => {
+                        showToast('Error deleting student: ' + error.message, 'danger');
+                    });
+            }
+        }
+        
+        function toggleRealTimeUpdates() {
+            if (!currentUser) return;
+            
+            const realTimeUpdate = document.getElementById('realTimeUpdate').checked;
+            const absencesRef = database.ref('users/' + currentUser.uid + '/absences');
+            
+            if (realTimeUpdate) {
+                // Reattach listener
+                absencesRef.on('value', (snapshot) => {
+                    const absencesData = snapshot.val();
+                    let absences = [];
+                    
+                    if (absencesData) {
+                        absences = Object.keys(absencesData).map(key => {
+                            return {
+                                id: key,
+                                ...absencesData[key]
+                            };
+                        });
+                    }
+                    
+                    displayAbsences(absences);
+                    updateStatistics(absences);
+                    updateCharts(absences);
+                });
+                showToast('Realtidsuppdatering aktiverad', 'success');
+            } else {
+                // Detach listener
+                absencesRef.off();
+                showToast('Realtidsuppdatering inaktiverad', 'info');
+            }
+        }
+        
+        function displayAbsences(absences) {
+            const container = document.getElementById('absencesContainer');
+            container.innerHTML = '';
+            
+            // Apply filters
+            const filteredAbsences = applyFilters(absences);
+            
+            if (filteredAbsences.length === 0) {
+                container.innerHTML = '<div class="alert alert-info text-center">Inga frånvaroregister hittades. Klicka på "Lägg till frånvaro" för att börja.</div>';
+                return;
+            }
+            
+            // Group absences by month and year
+            const grouped = groupAbsencesByMonth(filteredAbsences);
+            
+            // Display each group
+            for (const [key, groupAbsences] of Object.entries(grouped)) {
+                const [year, month] = key.split('-');
+                const monthName = getMonthName(parseInt(month));
+                
+                const monthHeader = document.createElement('div');
+                monthHeader.className = 'month-header';
+                monthHeader.setAttribute('data-month', key);
+                monthHeader.innerHTML = `
+                    <i class="fas fa-caret-down me-2"></i> ${monthName} ${year} (${groupAbsences.length} register)
+                `;
+                container.appendChild(monthHeader);
+                
+                const monthContent = document.createElement('div');
+                monthContent.className = 'month-content';
+                monthContent.id = `content-${key}`;
+                
+                const table = document.createElement('table');
+                table.className = 'table table-striped';
+                
+                // Table header
+                const thead = document.createElement('thead');
+                thead.innerHTML = `
+                    <tr>
+                        <th>Datum</th>
+                        <th>Elev</th>
+                        <th>Orsak</th>
+                        <th>Anteckningar</th>
+                        <th>Åtgärder</th>
+                    </tr>
+                `;
+                table.appendChild(thead);
+                
+                // Table body
+                const tbody = document.createElement('tbody');
+                groupAbsences.forEach(absence => {
+                    const row = document.createElement('tr');
+                    const date = new Date(absence.date);
+                    const formattedDate = date.toLocaleDateString('sv-SE');
+                    
+                    row.innerHTML = `
+                        <td>${formattedDate}</td>
+                        <td>${absence.studentName}</td>
+                        <td>${absence.reason}</td>
+                        <td>${absence.notes || '-'}</td>
+                        <td class="action-buttons">
+                            <button class="btn btn-sm btn-outline-primary edit-btn" data-id="${absence.id}">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger delete-btn" data-id="${absence.id}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    `;
+                    
+                    tbody.appendChild(row);
+                });
+                
+                table.appendChild(tbody);
+                monthContent.appendChild(table);
+                container.appendChild(monthContent);
+                
+                // Add event listener to month header for collapsing/expanding
+                monthHeader.addEventListener('click', () => {
+                    const content = document.getElementById(`content-${key}`);
+                    const icon = monthHeader.querySelector('i');
+                    
+                    if (content.classList.contains('collapsed')) {
+                        content.classList.remove('collapsed');
+                        icon.classList.remove('fa-caret-right');
+                        icon.classList.add('fa-caret-down');
+                    } else {
+                        content.classList.add('collapsed');
+                        icon.classList.remove('fa-caret-down');
+                        icon.classList.add('fa-caret-right');
+                    }
+                });
+            }
+            
+            // Add event listeners to edit and delete buttons
+            setTimeout(() => {
+                document.querySelectorAll('.edit-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const id = e.currentTarget.getAttribute('data-id');
+                        editAbsence(id);
+                    });
+                });
+                
+                document.querySelectorAll('.delete-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const id = e.currentTarget.getAttribute('data-id');
+                        deleteAbsence(id);
+                    });
+                });
+                
+                // Add context menu to table rows
+                document.querySelectorAll('tbody tr').forEach(row => {
+                    row.addEventListener('contextmenu', (e) => {
+                        e.preventDefault();
+                        showContextMenu(e, row);
+                    });
+                });
+            }, 0);
+        }
+        
+        function applyFilters(absences) {
+            const year = document.getElementById('yearFilter').value;
+            const monthRange = document.getElementById('monthRangeFilter').value;
+            const searchText = document.getElementById('searchInput').value.toLowerCase();
+            
+            let filtered = absences;
+            
+            // Filter by year
+            if (year !== 'all') {
+                filtered = filtered.filter(a => new Date(a.date).getFullYear().toString() === year);
+            }
+            
+            // Filter by month range
+            if (monthRange) {
+                const [yearPart, monthPart] = monthRange.split('-');
+                filtered = filtered.filter(a => {
+                    const date = new Date(a.date);
+                    return date.getFullYear().toString() === yearPart && 
+                           (date.getMonth() + 1).toString().padStart(2, '0') === monthPart;
+                });
+            }
+            
+            // Filter by search text
+            if (searchText) {
+                filtered = filtered.filter(a => 
+                    a.studentName.toLowerCase().includes(searchText) ||
+                    a.reason.toLowerCase().includes(searchText) ||
+                    (a.notes && a.notes.toLowerCase().includes(searchText))
+                );
+            }
+            
+            return filtered;
+        }
+        
+        function applyExportFilters(absences) {
+            const startDate = document.getElementById('exportStartDate').value;
+            const endDate = document.getElementById('exportEndDate').value;
+            const year = document.getElementById('exportYearFilter').value;
+            const reason = document.getElementById('exportReasonFilter').value;
+            const sortBy = document.getElementById('exportSortBy').value;
+            const sortOrder = document.getElementById('exportSortOrder').value;
+            
+            let filtered = absences;
+            
+            // Filter by date range
+            if (startDate) {
+                filtered = filtered.filter(a => a.date >= startDate);
+            }
+            
+            if (endDate) {
+                filtered = filtered.filter(a => a.date <= endDate);
+            }
+            
+            // Filter by year
+            if (year !== 'all') {
+                filtered = filtered.filter(a => new Date(a.date).getFullYear().toString() === year);
+            }
+            
+            // Filter by reason
+            if (reason !== 'all') {
+                filtered = filtered.filter(a => a.reason === reason);
+            }
+            
+            // Sort the results
+            filtered.sort((a, b) => {
+                let valueA, valueB;
+                
+                switch(sortBy) {
+                    case 'date':
+                        valueA = new Date(a.date);
+                        valueB = new Date(b.date);
+                        break;
+                    case 'student':
+                        valueA = a.studentName.toLowerCase();
+                        valueB = b.studentName.toLowerCase();
+                        break;
+                    case 'reason':
+                        valueA = a.reason.toLowerCase();
+                        valueB = b.reason.toLowerCase();
+                        break;
+                    default:
+                        valueA = new Date(a.date);
+                        valueB = new Date(b.date);
+                }
+                
+                if (sortOrder === 'asc') {
+                    return valueA > valueB ? 1 : -1;
+                } else {
+                    return valueA < valueB ? 1 : -1;
+                }
+            });
+            
+            return filtered;
+        }
+        
+        function groupAbsencesByMonth(absences) {
+            const grouped = {};
+            
+            absences.forEach(absence => {
+                const date = new Date(absence.date);
+                const year = date.getFullYear();
+                const month = date.getMonth() + 1;
+                const key = `${year}-${month.toString().padStart(2, '0')}`;
+                
+                if (!grouped[key]) {
+                    grouped[key] = [];
+                }
+                
+                grouped[key].push(absence);
+            });
+            
+            // Sort months descending (newest first)
+            return Object.fromEntries(
+                Object.entries(grouped).sort(([a], [b]) => {
+                    if (a < b) return 1;
+                    if (a > b) return -1;
+                    return 0;
+                })
+            );
+        }
+        
+        function getMonthName(month) {
+            const months = [
+                'Januari', 'Februari', 'Mars', 'April', 'Maj', 'Juni',
+                'Juli', 'Augusti', 'September', 'Oktober', 'November', 'December'
+            ];
+            
+            return months[month - 1] || '';
+        }
+        
+        function openAddAbsenceModal() {
+            if (!currentUser) {
+                showToast('Du måste logga in för att lägga till frånvaro', 'warning');
+                return;
+            }
+            
+            document.getElementById('modalTitle').textContent = 'Lägg till frånvaro';
+            document.getElementById('absenceForm').reset();
+            document.getElementById('absenceId').value = '';
+            document.getElementById('absenceDate').valueAsDate = new Date();
+            
+            const modal = new bootstrap.Modal(document.getElementById('absenceModal'));
+            modal.show();
+        }
+        
+        function editAbsence(id) {
+            if (!currentUser) return;
+            
+            database.ref('users/' + currentUser.uid + '/absences/' + id).once('value')
+                .then((snapshot) => {
+                    const absence = snapshot.val();
+                    
+                    if (absence) {
+                        document.getElementById('modalTitle').textContent = 'Redigera frånvaro';
+                        document.getElementById('absenceId').value = id;
+                        document.getElementById('studentName').value = absence.studentName;
+                        document.getElementById('absenceDate').value = absence.date;
+                        document.getElementById('absenceReason').value = absence.reason;
+                        document.getElementById('absenceNotes').value = absence.notes || '';
+                        
+                        const modal = new bootstrap.Modal(document.getElementById('absenceModal'));
+                        modal.show();
+                    }
+                })
+                .catch((error) => {
+                    showToast('Error loading absence: ' + error.message, 'danger');
+                });
+        }
+        
+        function saveAbsence() {
+            if (!currentUser) {
+                showToast('Du måste logga in för att spara frånvaro', 'warning');
+                return;
+            }
+            
+            const id = document.getElementById('absenceId').value;
+            const studentName = document.getElementById('studentName').value;
+            const date = document.getElementById('absenceDate').value;
+            const reason = document.getElementById('absenceReason').value;
+            const notes = document.getElementById('absenceNotes').value;
+            
+            if (!studentName || !date || !reason) {
+                showToast('Vänligen fyll i alla obligatoriska fält.', 'warning');
+                return;
+            }
+            
+            const absenceData = {
+                studentName,
+                date,
+                reason,
+                notes
+            };
+            
+            if (id) {
+                // Update existing absence
+                database.ref('users/' + currentUser.uid + '/absences/' + id).update(absenceData)
+                    .then(() => {
+                        showToast('Frånvaroregistrering uppdaterad!', 'success');
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('absenceModal'));
+                        modal.hide();
+                    })
+                    .catch((error) => {
+                        showToast('Error updating absence: ' + error.message, 'danger');
+                    });
+            } else {
+                // Add new absence
+                database.ref('users/' + currentUser.uid + '/absences').push(absenceData)
+                    .then(() => {
+                        showToast('Frånvaroregistrering tillagd!', 'success');
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('absenceModal'));
+                        modal.hide();
+                    })
+                    .catch((error) => {
+                        showToast('Error adding absence: ' + error.message, 'danger');
+                    });
+            }
+        }
+        
+        function deleteAbsence(id) {
+            if (!currentUser) return;
+            
+            if (confirm('Är du säker på att du vill ta bort denna frånvaroregistrering?')) {
+                database.ref('users/' + currentUser.uid + '/absences/' + id).remove()
+                    .then(() => {
+                        showToast('Frånvaroregistrering borttagen!', 'success');
+                    })
+                    .catch((error) => {
+                        showToast('Error deleting absence: ' + error.message, 'danger');
+                    });
+            }
+        }
+        
+        function updateStatistics(absences) {
+            // Total absences
+            document.getElementById('totalAbsences').textContent = absences.length;
+            
+            // Current month absences
+            const now = new Date();
+            const currentMonth = now.getMonth() + 1;
+            const currentYear = now.getFullYear();
+            
+            const monthAbsences = absences.filter(a => {
+                const date = new Date(a.date);
+                return date.getMonth() + 1 === currentMonth && date.getFullYear() === currentYear;
+            });
+            
+            document.getElementById('monthAbsences').textContent = monthAbsences.length;
+            
+            // Sickness absences
+            const sicknessAbsences = absences.filter(a => a.reason === 'Förkylning');
+            document.getElementById('sicknessAbsences').textContent = sicknessAbsences.length;
+            
+            // Term absences (assuming term is from August to June)
+            const currentTermAbsences = absences.filter(a => {
+                const date = new Date(a.date);
+                const year = date.getFullYear();
+                const month = date.getMonth() + 1;
+                
+                // First term: August to December of current year
+                // Second term: January to June of next year
+                if (month >= 8 && month <= 12) {
+                    return year === currentYear;
+                } else if (month >= 1 && month <= 6) {
+                    return year === currentYear + 1;
+                }
+                return false;
+            });
+            
+            document.getElementById('termAbsences').textContent = currentTermAbsences.length;
+        }
+        
+        function updateCharts(absences) {
+            updateReasonChart(absences);
+            updateMonthlyTrendChart(absences);
+        }
+        
+        function updateReasonChart(absences) {
+            const ctx = document.getElementById('reasonChart').getContext('2d');
+            
+			// Count absences by reason
+			const reasons = {
+				'Förkylning': 0,
+				'Familjeskäl': 0,
+				'Övrigt': 0,
+				'Läkarbesök': 0,
+				'Tandläkarbesök': 0,
+				'Studier': 0,
+				'Resa': 0,
+				'Sjukdom': 0,
+				'Begravning': 0,
+				'Flytt': 0
+			};
+
+            
+            absences.forEach(absence => {
+                if (reasons.hasOwnProperty(absence.reason)) {
+                    reasons[absence.reason]++;
+                } else {
+                    reasons['Övrigt']++;
+                }
+            });
+            
+            // Destroy previous chart if it exists
+            if (reasonChart) {
+                reasonChart.destroy();
+            }
+            
+            // Create new chart
+            reasonChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(reasons),
+                    datasets: [{
+                        data: Object.values(reasons),
+                        backgroundColor: [
+                            '#FF6384',
+                            '#36A2EB',
+                            '#FFCE56'
+                        ],
+                        hoverBackgroundColor: [
+                            '#FF6384',
+                            '#36A2EB',
+                            '#FFCE56'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Frånvaro efter orsak'
+                        },
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+        
+        function updateMonthlyTrendChart(absences) {
+            const ctx = document.getElementById('monthlyTrendChart').getContext('2d');
+            
+            // Group absences by month
+            const monthlyData = {};
+            const now = new Date();
+            const currentYear = now.getFullYear();
+            
+            // Initialize with last 6 months
+            for (let i = 5; i >= 0; i--) {
+                const date = new Date(currentYear, now.getMonth() - i, 1);
+                const key = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+                monthlyData[key] = 0;
+            }
+            
+            // Count absences per month
+            absences.forEach(absence => {
+                const date = new Date(absence.date);
+                const key = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+                
+                if (monthlyData.hasOwnProperty(key)) {
+                    monthlyData[key]++;
+                }
+            });
+            
+            // Prepare data for chart
+            const labels = Object.keys(monthlyData).map(key => {
+                const [year, month] = key.split('-');
+                return `${getMonthName(parseInt(month))} ${year}`;
+            });
+            
+            const data = Object.values(monthlyData);
+            
+            // Destroy previous chart if it exists
+            if (monthlyTrendChart) {
+                monthlyTrendChart.destroy();
+            }
+            
+            // Create new chart
+            monthlyTrendChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Antal frånvaron',
+                        data: data,
+                        backgroundColor: 'rgba(63, 81, 181, 0.2)',
+                        borderColor: 'rgba(63, 81, 181, 1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: 'rgba(63, 81, 181, 1)',
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Månatlig trend'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function populateYearFilter() {
+            const yearFilter = document.getElementById('yearFilter');
+            const exportYearFilter = document.getElementById('exportYearFilter');
+            
+            // Get current year
+            const currentYear = new Date().getFullYear();
+            
+            // Add options for current year and previous 5 years
+            yearFilter.innerHTML = '<option value="all">Alla år</option>';
+            exportYearFilter.innerHTML = '<option value="all">Alla år</option>';
+            
+            for (let i = 5; i >= 0; i--) {
+                const year = currentYear - i;
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year;
+                yearFilter.appendChild(option);
+                
+                const exportOption = option.cloneNode(true);
+                exportYearFilter.appendChild(exportOption);
+            }
+            
+            // Set current year as selected
+            yearFilter.value = currentYear;
+            exportYearFilter.value = currentYear;
+        }
+        
+        function filterRecords() {
+            if (!currentUser) return;
+            
+            // This will be handled by the real-time listener
+            // The displayAbsences function will be called with updated data
+            database.ref('users/' + currentUser.uid + '/absences').once('value')
+                .then((snapshot) => {
+                    const absencesData = snapshot.val();
+                    let absences = [];
+                    
+                    if (absencesData) {
+                        absences = Object.keys(absencesData).map(key => {
+                            return {
+                                id: key,
+                                ...absencesData[key]
+                            };
+                        });
+                    }
+                    
+                    displayAbsences(absences);
+                    updateStatistics(absences);
+                    updateCharts(absences);
+                })
+                .catch((error) => {
+                    showToast('Error filtering data: ' + error.message, 'danger');
+                });
+        }
+        
+        function openExportModal(type) {
+            if (!currentUser) {
+                showToast('Du måste logga in för att exportera', 'warning');
+                return;
+            }
+            
+            currentExportType = type;
+            const modal = new bootstrap.Modal(document.getElementById('exportModal'));
+            modal.show();
+        }
+        
+        function confirmExport() {
+            if (!currentUser) return;
+            
+            // Get all absences
+            database.ref('users/' + currentUser.uid + '/absences').once('value')
+                .then((snapshot) => {
+                    const absencesData = snapshot.val();
+                    let absences = [];
+                    
+                    if (absencesData) {
+                        absences = Object.keys(absencesData).map(key => {
+                            return {
+                                id: key,
+                                ...absencesData[key]
+                            };
+                        });
+                    }
+                    
+                    // Apply export filters
+                    const filteredAbsences = applyExportFilters(absences);
+                    
+                    if (filteredAbsences.length === 0) {
+                        showToast('Inga frånvaroregister att rapportera', 'warning');
+                        bootstrap.Modal.getInstance(document.getElementById('exportModal')).hide();
+                        return;
+                    }
+                    
+                    if (currentExportType === 'pdf') {
+                        exportToPdf(filteredAbsences);
+                    } else if (currentExportType === 'word') {
+                        exportToWord(filteredAbsences);
+                    }
+                    
+                    bootstrap.Modal.getInstance(document.getElementById('exportModal')).hide();
+                })
+                .catch((error) => {
+                    showToast('Error exporting data: ' + error.message, 'danger');
+                });
+        }
+        
+        function exportToPdf(absences) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Set document properties
+            doc.setProperties({
+                title: 'Frånvarorapport',
+                subject: 'Rapport över elevers frånvaro',
+                author: 'SkolaRaport',
+                keywords: 'frånvaro, skola, rapport',
+                creator: 'SkolaRaport'
+            });
+            
+            // Add title
+            doc.setFontSize(18);
+            doc.text('Frånvarorapport', 105, 15, { align: 'center' });
+            doc.setFontSize(12);
+            doc.text(`Genererad: ${new Date().toLocaleDateString('sv-SE')}`, 105, 25, { align: 'center' });
+            
+            // Get filter information
+            const startDate = document.getElementById('exportStartDate').value;
+            const endDate = document.getElementById('exportEndDate').value;
+            const yearFilter = document.getElementById('exportYearFilter').value;
+            const reasonFilter = document.getElementById('exportReasonFilter').value;
+            
+            // Add filter information
+            let filterText = 'Filter: ';
+            if (startDate && endDate) {
+                filterText += `Period: ${startDate} - ${endDate}`;
+            }
+            if (yearFilter !== 'all') {
+                filterText += filterText.length > 7 ? `, År: ${yearFilter}` : `År: ${yearFilter}`;
+            }
+            if (reasonFilter !== 'all') {
+                filterText += filterText.length > 7 ? `, Orsak: ${reasonFilter}` : `Orsak: ${reasonFilter}`;
+            }
+            
+            if (filterText.length > 7) {
+                doc.setFontSize(10);
+                doc.text(filterText, 14, 35);
+            }
+            
+            // Initialize variables for table rendering
+            let y = filterText.length > 7 ? 45 : 35;
+            const pageHeight = doc.internal.pageSize.height;
+            const rowHeight = 10;
+            
+            // Check if we have any absences to report
+            if (absences.length === 0) {
+                doc.setFontSize(12);
+                doc.text('Inga frånvaroregister att rapportera', 14, y);
+                doc.save('franvaro_rapport.pdf');
+                showToast('PDF-rapport genererad!', 'success');
+                return;
+            }
+            
+            // Add table headers
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'bold');
+            doc.text('Datum', 14, y);
+            doc.text('Elev', 50, y);
+            doc.text('Orsak', 100, y);
+            doc.text('Anteckningar', 140, y);
+            doc.setFont(undefined, 'normal');
+            
+            y += rowHeight;
+            
+            // Add a line under headers
+            doc.line(14, y - 3, 190, y - 3);
+            
+            // Add table rows
+            absences.forEach(absence => {
+                // Check if we need to add a new page
+                if (y > pageHeight - 20) {
+                    doc.addPage();
+                    y = 20;
+                    
+                    // Add table headers on new page
+                    doc.setFontSize(10);
+                    doc.setFont(undefined, 'bold');
+                    doc.text('Datum', 14, y);
+                    doc.text('Elev', 50, y);
+                    doc.text('Orsak', 100, y);
+                    doc.text('Anteckningar', 140, y);
+                    doc.setFont(undefined, 'normal');
+                    
+                    y += rowHeight;
+                    doc.line(14, y - 3, 190, y - 3);
+                }
+                
+                const date = new Date(absence.date);
+                const formattedDate = date.toLocaleDateString('sv-SE');
+                
+                // Split notes into multiple lines if too long
+                const notes = absence.notes || '-';
+                const splitNotes = doc.splitTextToSize(notes, 40);
+                
+                // Calculate row height based on notes
+                const currentRowHeight = rowHeight * Math.max(1, splitNotes.length);
+                
+                // Add row data
+                doc.text(formattedDate, 14, y);
+                doc.text(absence.studentName, 50, y);
+                doc.text(absence.reason, 100, y);
+                
+                // Add notes with multiple lines if needed
+                for (let i = 0; i < splitNotes.length; i++) {
+                    doc.text(splitNotes[i], 140, y + (i * rowHeight));
+                }
+                
+                y += currentRowHeight + 2;
+                
+                // Add a line between rows
+                doc.line(14, y - 2, 190, y - 2);
+            });
+            
+            // Add summary
+            if (y > pageHeight - 30) {
+                doc.addPage();
+                y = 20;
+            }
+            
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'bold');
+            doc.text(`Sammanfattning: ${absences.length} frånvaroregister`, 14, y);
+            
+            // Save the PDF
+            doc.save('franvaro_rapport.pdf');
+            showToast('PDF-rapport genererad!', 'success');
+        }
+        
+		function showAbsencesOnScreen(absences) {
+			try {
+				// Crear el contenedor de la "pantalla"
+				let html = `<h1 style="text-align:center;">Frånvarorapport</h1>`;
+				html += `<p style="text-align:center;">Genererad: ${new Date().toLocaleDateString('sv-SE')}</p>`;
+
+				// Obtener filtros
+				const startDate = document.getElementById('exportStartDate').value;
+				const endDate = document.getElementById('exportEndDate').value;
+				const yearFilter = document.getElementById('exportYearFilter').value;
+				const reasonFilter = document.getElementById('exportReasonFilter').value;
+
+				// Mostrar filtros aplicados
+				if (startDate || endDate || yearFilter !== 'all' || reasonFilter !== 'all') {
+					let filterText = 'Filter: ';
+					if (startDate && endDate) filterText += `Period: ${startDate} - ${endDate}`;
+					if (yearFilter !== 'all') filterText += filterText.length > 7 ? `, År: ${yearFilter}` : `År: ${yearFilter}`;
+					if (reasonFilter !== 'all') filterText += filterText.length > 7 ? `, Orsak: ${reasonFilter}` : `Orsak: ${reasonFilter}`;
+					html += `<p>${filterText}</p>`;
+				}
+
+				// Revisar si hay ausencias
+				if (absences.length === 0) {
+					html += `<p>Inga frånvaroregister att rapportera</p>`;
+				} else {
+					// Crear tabla
+					html += `
+						<table border="1" cellspacing="0" cellpadding="5" style="width:100%; border-collapse: collapse;">
+							<thead style="background-color: #D3D3D3;">
+								<tr>
+									<th>Datum</th>
+									<th>Elev</th>
+									<th>Orsak</th>
+									<th>Anteckningar</th>
+								</tr>
+							</thead>
+							<tbody>
+					`;
+
+					absences.forEach(absence => {
+						const date = new Date(absence.date).toLocaleDateString('sv-SE');
+						html += `
+							<tr>
+								<td>${date}</td>
+								<td>${absence.studentName}</td>
+								<td>${absence.reason}</td>
+								<td>${absence.notes || '-'}</td>
+							</tr>
+						`;
+					});
+
+					html += `</tbody></table>`;
+					html += `<p style="margin-top:20px;">Sammanfattning: ${absences.length} frånvaroregister</p>`;
+				}
+
+				// Abrir en nueva ventana para imprimir
+				const printWindow = window.open('', '', 'width=900,height=600');
+				printWindow.document.write(`<html><head><title>Frånvarorapport</title></head><body>${html}</body></html>`);
+				printWindow.document.close();
+				printWindow.focus();
+				printWindow.print();
+			} catch (error) {
+				showToast('Error mostrando ausencias: ' + error.message, 'danger');
+				console.error('Display error:', error);
+			}
+		}
+
+        
+        function saveAs(blob, fileName) {
+            // Create a download link and trigger click
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+        
+        function handleContextMenu(e) {
+            // Prevent default context menu
+            e.preventDefault();
+            
+            // Check if the click was on a table row
+            if (e.target.tagName === 'TD' || e.target.tagName === 'TR') {
+                let row = e.target;
+                if (row.tagName === 'TD') {
+                    row = row.parentElement;
+                }
+                
+                showContextMenu(e, row);
+            }
+        }
+        
+        function showContextMenu(e, row) {
+            const contextMenu = document.getElementById('contextMenu');
+            contextMenu.style.display = 'block';
+            contextMenu.style.left = e.pageX + 'px';
+            contextMenu.style.top = e.pageY + 'px';
+            
+            // Store the row data for later use
+            contextMenu.setAttribute('data-row', Array.from(row.cells).map(cell => cell.textContent).join('|'));
+            
+            // Add event listeners to context menu items
+            document.querySelectorAll('.context-menu-item').forEach(item => {
+                item.onclick = () => {
+                    const action = item.getAttribute('data-action');
+                    const rowData = contextMenu.getAttribute('data-row').split('|');
+                    
+                    if (action === 'copy') {
+                        copyRowData(rowData);
+                    } else if (action === 'pdf') {
+                        exportRowToPdf(rowData);
+                    }
+                    
+                    contextMenu.style.display = 'none';
+                };
+            });
+        }
+        
+        function hideContextMenu() {
+            document.getElementById('contextMenu').style.display = 'none';
+        }
+        
+        function copyRowData(rowData) {
+            const text = rowData.join('\t');
+            navigator.clipboard.writeText(text)
+                .then(() => {
+                    showToast('Data kopierad till urklipp!', 'success');
+                })
+                .catch(err => {
+                    showToast('Kunde inte kopiera data: ' + err, 'danger');
+                });
+        }
+        
+        function exportRowToPdf(rowData) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            doc.setFontSize(18);
+            doc.text('Frånvarorapport', 105, 15, { align: 'center' });
+            doc.setFontSize(12);
+            doc.text(`Datum: ${new Date().toLocaleDateString('sv-SE')}`, 105, 25, { align: 'center' });
+            
+            // Add table
+            doc.setFontSize(10);
+            const headers = ['Datum', 'Elev', 'Orsak', 'Anteckningar'];
+            let y = 40;
+            
+            headers.forEach((header, i) => {
+                doc.text(header, 20 + (i * 45), y);
+            });
+            
+            y += 7;
+            
+            headers.forEach((header, i) => {
+                doc.text(rowData[i] || '-', 20 + (i * 45), y);
+            });
+            
+            doc.save('franvaro_rapport.pdf');
+            showToast('PDF genererad!', 'success');
+        }
+        
+        function showToast(message, type = 'info') {
+            const toastContainer = document.querySelector('.toast-container');
+            const toastId = 'toast-' + Date.now();
+            
+            const toast = document.createElement('div');
+            toast.className = `toast align-items-center text-white bg-${type} border-0`;
+            toast.setAttribute('role', 'alert');
+            toast.setAttribute('aria-live', 'assertive');
+            toast.setAttribute('aria-atomic', 'true');
+            toast.id = toastId;
+            
+            toast.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            `;
+            
+            toastContainer.appendChild(toast);
+            
+            const bsToast = new bootstrap.Toast(toast, {
+                autohide: true,
+                delay: 3000
+            });
+            
+            bsToast.show();
+            
+            // Remove toast from DOM after it's hidden
+            toast.addEventListener('hidden.bs.toast', () => {
+                toast.remove();
+            });
+        }
+        
+        function goToHomePage() {
+            window.location.href = 'https://chuckutruck.github.io/G12_A1/';
+        }
+    </script>
+</body>
+</html>
