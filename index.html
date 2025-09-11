@@ -7,7 +7,6 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/docx/7.8.1/docx.js"></script>
     <!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
@@ -85,6 +84,12 @@
         .btn-export {
             background-color: #4caf50;
             border-color: #4caf50;
+            color: white;
+        }
+        
+        .btn-view {
+            background-color: #2196f3;
+            border-color: #2196f3;
             color: white;
         }
         
@@ -197,6 +202,67 @@
                 height: 250px;
             }
         }
+        
+        /* Estilos para la ventana de vista previa */
+        #previewContainer {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+            z-index: 10000;
+            overflow: auto;
+            padding: 20px;
+        }
+        
+        .preview-content {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            margin: 20px auto;
+            max-width: 900px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #eee;
+        }
+        
+        .preview-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        
+        .preview-table th {
+            background-color: #f8f9fa;
+            padding: 12px;
+            text-align: left;
+            border-bottom: 2px solid #dee2e6;
+        }
+        
+        .preview-table td {
+            padding: 10px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .preview-table tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .preview-actions {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
@@ -208,6 +274,25 @@
         <div id="contextMenu" class="context-menu">
             <div class="context-menu-item" data-action="copy">Kopiera</div>
             <div class="context-menu-item" data-action="pdf">Exportera till PDF</div>
+        </div>
+        
+        <!-- Vista previa en pantalla -->
+        <div id="previewContainer">
+            <div class="preview-content">
+                <div class="preview-header">
+                    <h2 id="previewTitle">Frånvarorapport</h2>
+                    <button type="button" class="btn-close" id="closePreview"></button>
+                </div>
+                <div id="previewBody"></div>
+                <div class="preview-actions">
+                    <button class="btn btn-primary" id="printPreview">
+                        <i class="fas fa-print me-2"></i>Skriv ut
+                    </button>
+                    <button class="btn btn-secondary" id="closePreviewBtn">
+                        <i class="fas fa-times me-2"></i>Stäng
+                    </button>
+                </div>
+            </div>
         </div>
         
         <!-- Header -->
@@ -306,8 +391,8 @@
                         <button id="exportPdfBtn" class="btn btn-export me-2 w-50">
                             <i class="fas fa-file-pdf me-1"></i> PDF
                         </button>
-                        <button id="exportWordBtn" class="btn btn-export w-50">
-                            <i class="fas fa-file-word me-1"></i> Word
+                        <button id="viewOnScreenBtn" class="btn btn-view w-50">
+                            <i class="fas fa-eye me-1"></i> Visa på skärmen
                         </button>
                     </div>
                 </div>
@@ -575,7 +660,7 @@
             document.getElementById('saveAbsenceBtn').addEventListener('click', saveAbsence);
             document.getElementById('homeButton').addEventListener('click', goToHomePage);
             document.getElementById('exportPdfBtn').addEventListener('click', () => openExportModal('pdf'));
-            document.getElementById('exportWordBtn').addEventListener('click', () => openExportModal('word'));
+            document.getElementById('viewOnScreenBtn').addEventListener('click', () => openExportModal('screen'));
             document.getElementById('yearFilter').addEventListener('change', filterRecords);
             document.getElementById('monthRangeFilter').addEventListener('change', filterRecords);
             document.getElementById('searchInput').addEventListener('input', filterRecords);
@@ -584,6 +669,11 @@
             document.getElementById('manageStudentsBtn').addEventListener('click', openManageStudentsModal);
             document.getElementById('addStudentBtn').addEventListener('click', addStudent);
             document.getElementById('confirmExportBtn').addEventListener('click', confirmExport);
+            
+            // Preview event listeners
+            document.getElementById('closePreview').addEventListener('click', closePreview);
+            document.getElementById('closePreviewBtn').addEventListener('click', closePreview);
+            document.getElementById('printPreview').addEventListener('click', printPreview);
             
             // Auth form listeners
             document.getElementById('loginForm').addEventListener('submit', login);
@@ -1338,12 +1428,26 @@
                         backgroundColor: [
                             '#FF6384',
                             '#36A2EB',
-                            '#FFCE56'
+                            '#FFCE56',
+                            '#4BC0C0',
+                            '#9966FF',
+                            '#FF9F40',
+                            '#FF6384',
+                            '#C9CBCF',
+                            '#4BC0C0',
+                            '#FFCD56'
                         ],
                         hoverBackgroundColor: [
                             '#FF6384',
                             '#36A2EB',
-                            '#FFCE56'
+                            '#FFCE56',
+                            '#4BC0C0',
+                            '#9966FF',
+                            '#FF9F40',
+                            '#FF6384',
+                            '#C9CBCF',
+                            '#4BC0C0',
+                            '#FFCD56'
                         ]
                     }]
                 },
@@ -1499,6 +1603,19 @@
             }
             
             currentExportType = type;
+            
+            // Update modal title and button text based on type
+            const modalTitle = document.querySelector('#exportModal .modal-title');
+            const confirmBtn = document.getElementById('confirmExportBtn');
+            
+            if (type === 'pdf') {
+                modalTitle.textContent = 'Exportera till PDF';
+                confirmBtn.textContent = 'Exportera';
+            } else if (type === 'screen') {
+                modalTitle.textContent = 'Visa på skärmen';
+                confirmBtn.textContent = 'Visa';
+            }
+            
             const modal = new bootstrap.Modal(document.getElementById('exportModal'));
             modal.show();
         }
@@ -1532,8 +1649,8 @@
                     
                     if (currentExportType === 'pdf') {
                         exportToPdf(filteredAbsences);
-                    } else if (currentExportType === 'word') {
-                        exportToWord(filteredAbsences);
+                    } else if (currentExportType === 'screen') {
+                        showAbsencesOnScreen(filteredAbsences);
                     }
                     
                     bootstrap.Modal.getInstance(document.getElementById('exportModal')).hide();
@@ -1674,73 +1791,116 @@
             showToast('PDF-rapport genererad!', 'success');
         }
         
-		function showAbsencesOnScreen(absences) {
-			try {
-				// Crear el contenedor de la "pantalla"
-				let html = `<h1 style="text-align:center;">Frånvarorapport</h1>`;
-				html += `<p style="text-align:center;">Genererad: ${new Date().toLocaleDateString('sv-SE')}</p>`;
-
-				// Obtener filtros
-				const startDate = document.getElementById('exportStartDate').value;
-				const endDate = document.getElementById('exportEndDate').value;
-				const yearFilter = document.getElementById('exportYearFilter').value;
-				const reasonFilter = document.getElementById('exportReasonFilter').value;
-
-				// Mostrar filtros aplicados
-				if (startDate || endDate || yearFilter !== 'all' || reasonFilter !== 'all') {
-					let filterText = 'Filter: ';
-					if (startDate && endDate) filterText += `Period: ${startDate} - ${endDate}`;
-					if (yearFilter !== 'all') filterText += filterText.length > 7 ? `, År: ${yearFilter}` : `År: ${yearFilter}`;
-					if (reasonFilter !== 'all') filterText += filterText.length > 7 ? `, Orsak: ${reasonFilter}` : `Orsak: ${reasonFilter}`;
-					html += `<p>${filterText}</p>`;
-				}
-
-				// Revisar si hay ausencias
-				if (absences.length === 0) {
-					html += `<p>Inga frånvaroregister att rapportera</p>`;
-				} else {
-					// Crear tabla
-					html += `
-						<table border="1" cellspacing="0" cellpadding="5" style="width:100%; border-collapse: collapse;">
-							<thead style="background-color: #D3D3D3;">
-								<tr>
-									<th>Datum</th>
-									<th>Elev</th>
-									<th>Orsak</th>
-									<th>Anteckningar</th>
-								</tr>
-							</thead>
-							<tbody>
-					`;
-
-					absences.forEach(absence => {
-						const date = new Date(absence.date).toLocaleDateString('sv-SE');
-						html += `
-							<tr>
-								<td>${date}</td>
-								<td>${absence.studentName}</td>
-								<td>${absence.reason}</td>
-								<td>${absence.notes || '-'}</td>
-							</tr>
-						`;
-					});
-
-					html += `</tbody></table>`;
-					html += `<p style="margin-top:20px;">Sammanfattning: ${absences.length} frånvaroregister</p>`;
-				}
-
-				// Abrir en nueva ventana para imprimir
-				const printWindow = window.open('', '', 'width=900,height=600');
-				printWindow.document.write(`<html><head><title>Frånvarorapport</title></head><body>${html}</body></html>`);
-				printWindow.document.close();
-				printWindow.focus();
-				printWindow.print();
-			} catch (error) {
-				showToast('Error mostrando ausencias: ' + error.message, 'danger');
-				console.error('Display error:', error);
-			}
-		}
-
+        function showAbsencesOnScreen(absences) {
+            try {
+                // Get filter information
+                const startDate = document.getElementById('exportStartDate').value;
+                const endDate = document.getElementById('exportEndDate').value;
+                const yearFilter = document.getElementById('exportYearFilter').value;
+                const reasonFilter = document.getElementById('exportReasonFilter').value;
+                
+                // Create HTML content
+                let html = `
+                    <h1 style="text-align:center; color: #3f51b5;">Frånvarorapport</h1>
+                    <p style="text-align:center; font-size: 1.1rem;">Genererad: ${new Date().toLocaleDateString('sv-SE')}</p>
+                `;
+                
+                // Add filter information
+                let filterText = '';
+                if (startDate || endDate || yearFilter !== 'all' || reasonFilter !== 'all') {
+                    filterText = '<div style="margin-bottom: 20px; padding: 10px; background-color: #f8f9fa; border-radius: 5px;"><strong>Filter:</strong> ';
+                    
+                    if (startDate && endDate) {
+                        filterText += `Period: ${startDate} - ${endDate}`;
+                    }
+                    if (yearFilter !== 'all') {
+                        filterText += filterText.includes('Period') ? `, År: ${yearFilter}` : `År: ${yearFilter}`;
+                    }
+                    if (reasonFilter !== 'all') {
+                        filterText += filterText.includes('Period') || filterText.includes('År') ? `, Orsak: ${reasonFilter}` : `Orsak: ${reasonFilter}`;
+                    }
+                    
+                    filterText += '</div>';
+                    html += filterText;
+                }
+                
+                if (absences.length === 0) {
+                    html += `
+                        <div style="text-align:center; padding: 40px; background-color: #f8f9fa; border-radius: 5px;">
+                            <p style="font-size: 1.2rem;">Inga frånvaroregister att rapportera</p>
+                        </div>
+                    `;
+                } else {
+                    // Create table
+                    html += `
+                        <table class="preview-table">
+                            <thead>
+                                <tr>
+                                    <th>Datum</th>
+                                    <th>Elev</th>
+                                    <th>Orsak</th>
+                                    <th>Anteckningar</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+                    
+                    // Add table rows
+                    absences.forEach(absence => {
+                        const date = new Date(absence.date).toLocaleDateString('sv-SE');
+                        html += `
+                            <tr>
+                                <td>${date}</td>
+                                <td>${absence.studentName}</td>
+                                <td>${absence.reason}</td>
+                                <td>${absence.notes || '-'}</td>
+                            </tr>
+                        `;
+                    });
+                    
+                    html += `</tbody></table>`;
+                    
+                    // Add summary
+                    html += `
+                        <div style="margin-top: 20px; padding: 15px; background-color: #e8f5e9; border-radius: 5px;">
+                            <strong>Sammanfattning:</strong> ${absences.length} frånvaroregister
+                        </div>
+                    `;
+                }
+                
+                // Update preview content
+                document.getElementById('previewTitle').textContent = 'Frånvarorapport';
+                document.getElementById('previewBody').innerHTML = html;
+                
+                // Show preview
+                document.getElementById('previewContainer').style.display = 'block';
+                
+            } catch (error) {
+                console.error('Display error:', error);
+                showToast('Fel vid visning av frånvaro: ' + error.message, 'danger');
+            }
+        }
+        
+        function closePreview() {
+            document.getElementById('previewContainer').style.display = 'none';
+        }
+        
+        function printPreview() {
+            const printContent = document.getElementById('previewBody').innerHTML;
+            const originalContent = document.body.innerHTML;
+            
+            document.body.innerHTML = `
+                <div style="padding: 30px;">
+                    <h1 style="text-align:center;">Frånvarorapport</h1>
+                    <p style="text-align:center;">Genererad: ${new Date().toLocaleDateString('sv-SE')}</p>
+                    ${printContent}
+                </div>
+            `;
+            
+            window.print();
+            document.body.innerHTML = originalContent;
+            location.reload();
+        }
         
         function saveAs(blob, fileName) {
             // Create a download link and trigger click
