@@ -1791,169 +1791,139 @@
             showToast('PDF-rapport genererad!', 'success');
         }
         
-        function showAbsencesOnScreen(absences) {
-            try {
-                // Get filter information
-                const startDate = document.getElementById('exportStartDate').value;
-                const endDate = document.getElementById('exportEndDate').value;
-                const yearFilter = document.getElementById('exportYearFilter').value;
-                const reasonFilter = document.getElementById('exportReasonFilter').value;
-                
-                // Create HTML content
-                let html = `
-                    <h1 style="text-align:center; color: #3f51b5;">Frånvarorapport</h1>
-                    <p style="text-align:center; font-size: 1.1rem;">Genererad: ${new Date().toLocaleDateString('sv-SE')}</p>
-                `;
-                
-                // Add filter information
-                let filterText = '';
-                if (startDate || endDate || yearFilter !== 'all' || reasonFilter !== 'all') {
-                    filterText = '<div style="margin-bottom: 20px; padding: 10px; background-color: #f8f9fa; border-radius: 5px;"><strong>Filter:</strong> ';
-                    
-                    if (startDate && endDate) {
-                        filterText += `Period: ${startDate} - ${endDate}`;
-                    }
-                    if (yearFilter !== 'all') {
-                        filterText += filterText.includes('Period') ? `, År: ${yearFilter}` : `År: ${yearFilter}`;
-                    }
-                    if (reasonFilter !== 'all') {
-                        filterText += filterText.includes('Period') || filterText.includes('År') ? `, Orsak: ${reasonFilter}` : `Orsak: ${reasonFilter}`;
-                    }
-                    
-                    filterText += '</div>';
-                    html += filterText;
-                }
-                
-                if (absences.length === 0) {
-                    html += `
-                        <div style="text-align:center; padding: 40px; background-color: #f8f9fa; border-radius: 5px;">
-                            <p style="font-size: 1.2rem;">Inga frånvaroregister att rapportera</p>
-                        </div>
-                    `;
-                } else {
-                    // Create table
-                    html += `
-                        <table class="preview-table">
-                            <thead>
-                                <tr>
-                                    <th>Datum</th>
-                                    <th>Elev</th>
-                                    <th>Orsak</th>
-                                    <th>Anteckningar</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                    `;
-                    
-                    // Add table rows
-                    absences.forEach(absence => {
-                        const date = new Date(absence.date).toLocaleDateString('sv-SE');
-                        html += `
-                            <tr>
-                                <td>${date}</td>
-                                <td>${absence.studentName}</td>
-                                <td>${absence.reason}</td>
-                                <td>${absence.notes || '-'}</td>
-                            </tr>
-                        `;
-                    });
-                    
-                    html += `</tbody></table>`;
-                    
-                    // Add summary
-                    html += `
-                        <div style="margin-top: 20px; padding: 15px; background-color: #e8f5e9; border-radius: 5px;">
-                            <strong>Sammanfattning:</strong> ${absences.length} frånvaroregister
-                        </div>
-                    `;
-                }
-                
-                // Update preview content
-                document.getElementById('previewTitle').textContent = 'Frånvarorapport';
-                document.getElementById('previewBody').innerHTML = html;
-                
-                // Show preview
-                document.getElementById('previewContainer').style.display = 'block';
-                
-            } catch (error) {
-                console.error('Display error:', error);
-                showToast('Fel vid visning av frånvaro: ' + error.message, 'danger');
-            }
-        }
-        
-        function closePreview() {
-            document.getElementById('previewContainer').style.display = 'none';
-        }
-        
-        function printPreview() {
-            const printContent = document.getElementById('previewBody').innerHTML;
-            const originalContent = document.body.innerHTML;
-            
-            document.body.innerHTML = `
-                <div style="padding: 30px;">
-                    <h1 style="text-align:center;">Frånvarorapport</h1>
-                    <p style="text-align:center;">Genererad: ${new Date().toLocaleDateString('sv-SE')}</p>
-                    ${printContent}
-                </div>
-            `;
-            
-            window.print();
-            document.body.innerHTML = originalContent;
-            location.reload();
-        }
-        
-        function saveAs(blob, fileName) {
-            // Create a download link and trigger click
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = fileName;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
-        }
-        
-        function handleContextMenu(e) {
-            // Prevent default context menu
-            e.preventDefault();
-            
-            // Check if the click was on a table row
-            if (e.target.tagName === 'TD' || e.target.tagName === 'TR') {
-                let row = e.target;
-                if (row.tagName === 'TD') {
-                    row = row.parentElement;
-                }
-                
-                showContextMenu(e, row);
-            }
-        }
-        
-        function showContextMenu(e, row) {
-            const contextMenu = document.getElementById('contextMenu');
-            contextMenu.style.display = 'block';
-            contextMenu.style.left = e.pageX + 'px';
-            contextMenu.style.top = e.pageY + 'px';
-            
-            // Store the row data for later use
-            contextMenu.setAttribute('data-row', Array.from(row.cells).map(cell => cell.textContent).join('|'));
-            
-            // Add event listeners to context menu items
-            document.querySelectorAll('.context-menu-item').forEach(item => {
-                item.onclick = () => {
-                    const action = item.getAttribute('data-action');
-                    const rowData = contextMenu.getAttribute('data-row').split('|');
-                    
-                    if (action === 'copy') {
-                        copyRowData(rowData);
-                    } else if (action === 'pdf') {
-                        exportRowToPdf(rowData);
-                    }
-                    
-                    contextMenu.style.display = 'none';
-                };
-            });
-        }
+		function showAbsencesOnScreen(absences) {
+			try {
+				// Obtener información de filtros
+				const startDate = document.getElementById('exportStartDate').value;
+				const endDate = document.getElementById('exportEndDate').value;
+				const yearFilter = document.getElementById('exportYearFilter').value;
+				const reasonFilter = document.getElementById('exportReasonFilter').value;
+
+				// Crear contenido HTML
+				let html = `
+					<h1 style="text-align:center; color: #3f51b5;">Frånvarorapport</h1>
+					<p style="text-align:center; font-size: 1.1rem;">Genererad: ${new Date().toLocaleDateString('sv-SE')}</p>
+				`;
+
+				// Agregar información de filtros
+				let filterText = '';
+				if (startDate || endDate || yearFilter !== 'all' || reasonFilter !== 'all') {
+					filterText = '<div style="margin-bottom: 20px; padding: 10px; background-color: #f8f9fa; border-radius: 5px;"><strong>Filter:</strong> ';
+					if (startDate && endDate) filterText += `Period: ${startDate} - ${endDate}`;
+					if (yearFilter !== 'all') filterText += filterText.includes('Period') ? `, År: ${yearFilter}` : `År: ${yearFilter}`;
+					if (reasonFilter !== 'all') filterText += filterText.includes('Period') || filterText.includes('År') ? `, Orsak: ${reasonFilter}` : `Orsak: ${reasonFilter}`;
+					filterText += '</div>';
+					html += filterText;
+				}
+
+				if (absences.length === 0) {
+					html += `
+						<div style="text-align:center; padding: 40px; background-color: #f8f9fa; border-radius: 5px;">
+							<p style="font-size: 1.2rem;">Inga frånvaroregister att rapportera</p>
+						</div>
+					`;
+				} else {
+					// Crear tabla
+					html += `
+						<table class="preview-table">
+							<thead>
+								<tr>
+									<th>Datum</th>
+									<th>Elev</th>
+									<th>Orsak</th>
+									<th>Anteckningar</th>
+								</tr>
+							</thead>
+							<tbody>
+					`;
+					// Agregar filas
+					absences.forEach(absence => {
+						const date = new Date(absence.date).toLocaleDateString('sv-SE');
+						html += `
+							<tr>
+								<td>${date}</td>
+								<td>${absence.studentName}</td>
+								<td>${absence.reason}</td>
+								<td>${absence.notes || '-'}</td>
+							</tr>
+						`;
+					});
+					html += `</tbody></table>`;
+
+					// Agregar resumen
+					html += `
+						<div style="margin-top: 20px; padding: 15px; background-color: #e8f5e9; border-radius: 5px;">
+							<strong>Sammanfattning:</strong> ${absences.length} frånvaroregister
+						</div>
+					`;
+				}
+
+				// Actualizar contenido de la previsualización
+				document.getElementById('previewTitle').textContent = 'Frånvarorapport';
+				document.getElementById('previewBody').innerHTML = html;
+				document.getElementById('previewContainer').style.display = 'block';
+
+			} catch (error) {
+				console.error('Display error:', error);
+				showToast('Fel vid visning av frånvaro: ' + error.message, 'danger');
+			}
+		}
+
+		function closePreview() {
+			document.getElementById('previewContainer').style.display = 'none';
+		}
+
+		function printPreview() {
+			// Obtener contenido de la previsualización (ya incluye título y fecha)
+			const printContent = document.getElementById('previewBody').innerHTML;
+			const originalContent = document.body.innerHTML;
+
+			// Imprimir exactamente lo que se ve en la previsualización
+			document.body.innerHTML = `<div style="padding: 30px;">${printContent}</div>`;
+			window.print();
+
+			// Restaurar contenido original
+			document.body.innerHTML = originalContent;
+			location.reload();
+		}
+
+		function saveAs(blob, fileName) {
+			const url = window.URL.createObjectURL(blob);
+			const a = document.createElement('a');
+			a.href = url;
+			a.download = fileName;
+			document.body.appendChild(a);
+			a.click();
+			document.body.removeChild(a);
+			window.URL.revokeObjectURL(url);
+		}
+
+		function handleContextMenu(e) {
+			e.preventDefault();
+			if (e.target.tagName === 'TD' || e.target.tagName === 'TR') {
+				let row = e.target.tagName === 'TD' ? e.target.parentElement : e.target;
+				showContextMenu(e, row);
+			}
+		}
+
+		function showContextMenu(e, row) {
+			const contextMenu = document.getElementById('contextMenu');
+			contextMenu.style.display = 'block';
+			contextMenu.style.left = e.pageX + 'px';
+			contextMenu.style.top = e.pageY + 'px';
+			contextMenu.setAttribute('data-row', Array.from(row.cells).map(cell => cell.textContent).join('|'));
+
+			document.querySelectorAll('.context-menu-item').forEach(item => {
+				item.onclick = () => {
+					const action = item.getAttribute('data-action');
+					const rowData = contextMenu.getAttribute('data-row').split('|');
+					if (action === 'copy') copyRowData(rowData);
+					else if (action === 'pdf') exportRowToPdf(rowData);
+					contextMenu.style.display = 'none';
+				};
+			});
+		}
+
         
         function hideContextMenu() {
             document.getElementById('contextMenu').style.display = 'none';
