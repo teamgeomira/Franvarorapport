@@ -263,6 +263,26 @@
             gap: 10px;
             margin-top: 20px;
         }
+        
+        /* Nuevos estilos para la reorganización */
+        .records-section {
+            margin-bottom: 30px;
+        }
+        
+        .stats-section {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+        
+        .section-title {
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+        }
     </style>
 </head>
 <body>
@@ -404,65 +424,73 @@
                 </div>
             </div>
             
-            <!-- Statistics -->
-            <div class="row mb-4">
-                <div class="col-md-3">
-                    <div class="stats-card card bg-primary text-white">
-                        <div class="card-body text-center">
-                            <h5 class="card-title">Total frånvaro</h5>
-                            <h2 id="totalAbsences">0</h2>
-                            <p class="card-text">dagar</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="stats-card card bg-info text-white">
-                        <div class="card-body text-center">
-                            <h5 class="card-title">Denna månad</h5>
-                            <h2 id="monthAbsences">0</h2>
-                            <p class="card-text">dagar</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="stats-card card bg-warning text-dark">
-                        <div class="card-body text-center">
-                            <h5 class="card-title">Förkylning</h5>
-                            <h2 id="sicknessAbsences">0</h2>
-                            <p class="card-text">dagar</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="stats-card card bg-success text-white">
-                        <div class="card-body text-center">
-                            <h5 class="card-title">Denna termin</h5>
-                            <h2 id="termAbsences">0</h2>
-                            <p class="card-text">dagar</p>
+            <!-- Absence Records Section (moved to top) -->
+            <div class="records-section">
+                <h3 class="section-title">Frånvaroregister</h3>
+                <div class="row">
+                    <div class="col-12">
+                        <div id="absencesContainer">
+                            <!-- Records will be grouped by month here -->
                         </div>
                     </div>
                 </div>
             </div>
             
-            <!-- Charts -->
-            <div class="row mb-4">
-                <div class="col-md-6">
-                    <div class="chart-container">
-                        <canvas id="reasonChart"></canvas>
+            <!-- Statistics Section (moved to bottom) -->
+            <div class="stats-section">
+                <h3 class="section-title">Statistik och Analys</h3>
+                
+                <!-- Statistics Cards -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="stats-card card bg-primary text-white">
+                            <div class="card-body text-center">
+                                <h5 class="card-title">Total frånvaro</h5>
+                                <h2 id="totalAbsences">0</h2>
+                                <p class="card-text">dagar</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stats-card card bg-info text-white">
+                            <div class="card-body text-center">
+                                <h5 class="card-title">Denna månad</h5>
+                                <h2 id="monthAbsences">0</h2>
+                                <p class="card-text">dagar</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stats-card card bg-warning text-dark">
+                            <div class="card-body text-center">
+                                <h5 class="card-title">Förkylning</h5>
+                                <h2 id="sicknessAbsences">0</h2>
+                                <p class="card-text">dagar</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stats-card card bg-success text-white">
+                            <div class="card-body text-center">
+                                <h5 class="card-title">Denna termin</h5>
+                                <h2 id="termAbsences">0</h2>
+                                <p class="card-text">dagar</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="col-md-6">
-                    <div class="chart-container">
-                        <canvas id="monthlyTrendChart"></canvas>
+                
+                <!-- Charts -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="chart-container">
+                            <canvas id="reasonChart"></canvas>
+                        </div>
                     </div>
-                </div>
-            </div>
-            
-            <!-- Absence Records -->
-            <div class="row">
-                <div class="col-12">
-                    <div id="absencesContainer">
-                        <!-- Records will be grouped by month here -->
+                    <div class="col-md-6">
+                        <div class="chart-container">
+                            <canvas id="monthlyTrendChart"></canvas>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -821,6 +849,9 @@
                             ...absencesData[key]
                         };
                     });
+                    
+                    // Sort absences by date (newest first)
+                    absences.sort((a, b) => new Date(b.date) - new Date(a.date));
                 }
                 
                 // Display the absences
@@ -977,6 +1008,9 @@
                                 ...absencesData[key]
                             };
                         });
+                        
+                        // Sort absences by date (newest first)
+                        absences.sort((a, b) => new Date(b.date) - new Date(a.date));
                     }
                     
                     displayAbsences(absences);
@@ -1585,6 +1619,9 @@
                                 ...absencesData[key]
                             };
                         });
+                        
+                        // Sort absences by date (newest first)
+                        absences.sort((a, b) => new Date(b.date) - new Date(a.date));
                     }
                     
                     displayAbsences(absences);
@@ -1636,6 +1673,9 @@
                                 ...absencesData[key]
                             };
                         });
+                        
+                        // Sort absences by date (newest first)
+                        absences.sort((a, b) => new Date(b.date) - new Date(a.date));
                     }
                     
                     // Apply export filters
@@ -1924,6 +1964,59 @@
 			});
 		}
 
+        
+        function saveAs(blob, fileName) {
+            // Create a download link and trigger click
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+        
+        function handleContextMenu(e) {
+            // Prevent default context menu
+            e.preventDefault();
+            
+            // Check if the click was on a table row
+            if (e.target.tagName === 'TD' || e.target.tagName === 'TR') {
+                let row = e.target;
+                if (row.tagName === 'TD') {
+                    row = row.parentElement;
+                }
+                
+                showContextMenu(e, row);
+            }
+        }
+        
+        function showContextMenu(e, row) {
+            const contextMenu = document.getElementById('contextMenu');
+            contextMenu.style.display = 'block';
+            contextMenu.style.left = e.pageX + 'px';
+            contextMenu.style.top = e.pageY + 'px';
+            
+            // Store the row data for later use
+            contextMenu.setAttribute('data-row', Array.from(row.cells).map(cell => cell.textContent).join('|'));
+            
+            // Add event listeners to context menu items
+            document.querySelectorAll('.context-menu-item').forEach(item => {
+                item.onclick = () => {
+                    const action = item.getAttribute('data-action');
+                    const rowData = contextMenu.getAttribute('data-row').split('|');
+                    
+                    if (action === 'copy') {
+                        copyRowData(rowData);
+                    } else if (action === 'pdf') {
+                        exportRowToPdf(rowData);
+                    }
+                    
+                    contextMenu.style.display = 'none';
+                };
+            });
+        }
         
         function hideContextMenu() {
             document.getElementById('contextMenu').style.display = 'none';
