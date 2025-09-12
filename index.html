@@ -374,48 +374,54 @@
             </div>
         </div>
         
-        <!-- Main Application Section (shown when logged in) -->
-        <div id="appSection" style="display: none;">
-            <!-- Controls and Filters -->
-            <div class="row mb-4">
-                <div class="col-md-3 mb-2">
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
-                        <select id="yearFilter" class="form-select">
-                            <option value="all">Alla år</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="col-md-3 mb-2">
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="fas fa-calendar"></i></span>
-                        <input type="month" id="monthRangeFilter" class="form-control" value="">
-                    </div>
-                </div>
-                <div class="col-md-3 mb-2">
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="fas fa-search"></i></span>
-                        <input type="text" id="searchInput" class="form-control" placeholder="Sök elev, orsak eller anteckningar...">
-                    </div>
-                </div>
-                <div class="col-md-3 mb-2">
-                    <button id="addAbsenceBtn" class="btn btn-primary w-100">
-                        <i class="fas fa-plus me-1"></i> Lägg till frånvaro
-                    </button>
-                </div>
-            </div>
-            
-            <div class="row mb-4">
-                <div class="col-md-6 mb-2">
-                    <div class="d-flex">
-                        <button id="exportPdfBtn" class="btn btn-export me-2 w-50">
-                            <i class="fas fa-file-pdf me-1"></i> PDF
-                        </button>
-                        <button id="viewOnScreenBtn" class="btn btn-view w-50">
-                            <i class="fas fa-eye me-1"></i> Visa på skärmen
-                        </button>
-                    </div>
-                </div>
+		<!-- Main Application Section (shown when logged in) -->
+		<div id="appSection" style="display: none;">
+			<!-- Controls and Filters -->
+			<div class="row mb-4">
+				<div class="col-md-3 mb-2">
+					<div class="input-group">
+						<span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+						<select id="yearFilter" class="form-select">
+							<option value="all">Alla år</option>
+						</select>
+					</div>
+				</div>
+				<div class="col-md-3 mb-2">
+					<div class="input-group">
+						<span class="input-group-text"><i class="fas fa-calendar"></i></span>
+						<input type="month" id="monthRangeFilter" class="form-control" value="">
+					</div>
+				</div>
+				<div class="col-md-3 mb-2">
+					<div class="input-group">
+						<span class="input-group-text"><i class="fas fa-search"></i></span>
+						<input type="text" id="searchInput" class="form-control" placeholder="Sök elev, orsak eller anteckningar...">
+					</div>
+				</div>
+				<div class="col-md-3 mb-2 d-flex">
+					<button id="addAbsenceBtn" class="btn btn-primary flex-grow-1 me-2">
+						<i class="fas fa-plus me-1"></i> Lägg till frånvaro
+					</button>
+					<button onclick="goToHomePage()" class="btn btn-secondary">
+						<i class="fas fa-home me-1"></i> Hem
+					</button>
+				</div>
+			</div>
+			
+			<div class="row mb-4">
+				<div class="col-md-6 mb-2">
+					<div class="d-flex">
+						<button id="exportPdfBtn" class="btn btn-export me-2 w-50">
+							<i class="fas fa-file-pdf me-1"></i> PDF
+						</button>
+						<button id="viewOnScreenBtn" class="btn btn-view w-50">
+							<i class="fas fa-eye me-1"></i> Visa på skärmen
+						</button>
+					</div>
+				</div>
+			</div>
+		</div>
+
                 <div class="col-md-6 mb-2">
                     <div class="form-check form-switch mt-2">
                         <input class="form-check-input" type="checkbox" id="realTimeUpdate" checked>
