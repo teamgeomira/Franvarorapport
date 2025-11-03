@@ -283,6 +283,52 @@
             margin-bottom: 20px;
             color: var(--primary-color);
         }
+        
+        /* Nuevos estilos para campos de horas */
+        .hours-input-group {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .hours-input {
+            flex: 1;
+        }
+        
+        .hours-display {
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
+        /* Estilo para grupos de opciones */
+        optgroup {
+            font-weight: bold;
+        }
+        
+        optgroup option {
+            font-weight: normal;
+            padding-left: 10px;
+        }
+        
+        /* Mejoras visuales para las estadísticas */
+        .stats-card .card-body {
+            padding: 1.5rem;
+        }
+        
+        .stats-card h2 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        /* Mejoras para el modal de ausencias */
+        .absence-modal-body {
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        
+        /* Estilo para el select de razón con grupos */
+        #absenceReason {
+            height: auto;
+        }
     </style>
 </head>
 <body>
@@ -402,7 +448,7 @@
 					<button id="addAbsenceBtn" class="btn btn-primary flex-grow-1 me-2">
 						<i class="fas fa-plus me-1"></i> Lägg till frånvaro
 					</button>
-					<button onclick="goToHomePage()" class="btn btn-secondary">
+					<button id="homeButton" class="btn btn-secondary">
 						<i class="fas fa-home me-1"></i> Hem
 					</button>
 				</div>
@@ -419,16 +465,13 @@
 						</button>
 					</div>
 				</div>
+				<div class="col-md-6 mb-2">
+					<div class="form-check form-switch mt-2">
+						<input class="form-check-input" type="checkbox" id="realTimeUpdate" checked>
+						<label class="form-check-label" for="realTimeUpdate">Realtidsuppdatering</label>
+					</div>
+				</div>
 			</div>
-		</div>
-
-                <div class="col-md-6 mb-2">
-                    <div class="form-check form-switch mt-2">
-                        <input class="form-check-input" type="checkbox" id="realTimeUpdate" checked>
-                        <label class="form-check-label" for="realTimeUpdate">Realtidsuppdatering</label>
-                    </div>
-                </div>
-            </div>
             
             <!-- Absence Records Section (moved to top) -->
             <div class="records-section">
@@ -453,7 +496,7 @@
                             <div class="card-body text-center">
                                 <h5 class="card-title">Total frånvaro</h5>
                                 <h2 id="totalAbsences">0</h2>
-                                <p class="card-text">dagar</p>
+                                <p class="card-text">timmar</p>
                             </div>
                         </div>
                     </div>
@@ -462,16 +505,16 @@
                             <div class="card-body text-center">
                                 <h5 class="card-title">Denna månad</h5>
                                 <h2 id="monthAbsences">0</h2>
-                                <p class="card-text">dagar</p>
+                                <p class="card-text">timmar</p>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="stats-card card bg-warning text-dark">
                             <div class="card-body text-center">
-                                <h5 class="card-title">Förkylning</h5>
+                                <h5 class="card-title">Hälsorelaterad</h5>
                                 <h2 id="sicknessAbsences">0</h2>
-                                <p class="card-text">dagar</p>
+                                <p class="card-text">timmar</p>
                             </div>
                         </div>
                     </div>
@@ -480,7 +523,7 @@
                             <div class="card-body text-center">
                                 <h5 class="card-title">Denna termin</h5>
                                 <h2 id="termAbsences">0</h2>
-                                <p class="card-text">dagar</p>
+                                <p class="card-text">timmar</p>
                             </div>
                         </div>
                     </div>
@@ -503,22 +546,20 @@
             
             <!-- Footer -->
             <div class="footer">
-                <button id="homeButton" class="btn btn-secondary">
-                    <i class="fas fa-home me-1"></i> Tillbaka till huvudsidan
-                </button>
+                <p>&copy; 2023 SkolaRaport - Alla rättigheter förbehållna</p>
             </div>
         </div>
     </div>
     
     <!-- Add/Edit Absence Modal -->
     <div class="modal fade" id="absenceModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="modalTitle">Lägg till frånvaro</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body absence-modal-body">
                     <form id="absenceForm">
                         <input type="hidden" id="absenceId">
                         <div class="mb-3">
@@ -532,25 +573,80 @@
                             <label for="absenceDate" class="form-label">Datum</label>
                             <input type="date" class="form-control" id="absenceDate" required>
                         </div>
-						<div class="mb-3">
-							<label for="absenceReason" class="form-label">Orsak</label>
-							<select class="form-select" id="absenceReason" required>
-								<option value="Förkylning">Förkylning</option>
-								<option value="Familjeskäl">Familjeskäl</option>
-								<option value="Övrigt">Övrigt</option>
-								<option value="Läkarbesök">Läkarbesök</option>
-								<option value="Tandläkarbesök">Tandläkarbesök</option>
-								<option value="Studier">Studier</option>
-								<option value="Resa">Resa</option>
-								<option value="Sjukdom">Sjukdom</option>
-								<option value="Begravning">Begravning</option>
-								<option value="Flytt">Flytt</option>
-							</select>
-						</div>
+                        <div class="mb-3">
+                            <label for="absenceReason" class="form-label">Orsak</label>
+                            <select class="form-select" id="absenceReason" required>
+                                <option value="" disabled selected>Välj en orsak</option>
+                                <optgroup label="Hälsa">
+                                    <option value="Förkylning">Förkylning</option>
+                                    <option value="Sjukdom">Sjukdom</option>
+                                    <option value="Läkarbesök">Läkarbesök</option>
+                                    <option value="Tandläkarbesök">Tandläkarbesök</option>
+                                    <option value="Psykisk ohälsa">Psykisk ohälsa</option>
+                                    <option value="Rehabilitering">Rehabilitering</option>
+                                    <option value="Vaccination">Vaccination</option>
+                                </optgroup>
 
+                                <optgroup label="Familj & Personliga skäl">
+                                    <option value="Familjeskäl">Familjeskäl</option>
+                                    <option value="Vård av barn">Vård av barn</option>
+                                    <option value="Begravning">Begravning</option>
+                                    <option value="Flytt">Flytt</option>
+                                    <option value="Religiös högtid">Religiös högtid</option>
+                                    <option value="Personliga skäl">Personliga skäl</option>
+                                    <option value="Myndighetsärende">Myndighetsärende (t.ex. Migrationsverket, polis)</option>
+                                </optgroup>
+
+                                <optgroup label="Studier & Skolrelaterat">
+                                    <option value="Studier">Studier (annan kurs eller utbildning)</option>
+                                    <option value="Skolaktivitet">Skolaktivitet (t.ex. studieresa, praktik)</option>
+                                    <option value="Nationella prov">Nationella prov</option>
+                                    <option value="Projektarbete">Projektarbete</option>
+                                    <option value="Distansundervisning">Tekniska problem vid distansundervisning</option>
+                                </optgroup>
+
+                                <optgroup label="Resor & Logistik">
+                                    <option value="Resa">Resa</option>
+                                    <option value="Missat tåg/buss">Missat tåg/buss</option>
+                                    <option value="Trafikproblem">Trafikproblem</option>
+                                    <option value="Snöstorm/väderproblem">Snöstorm/väderproblem</option>
+                                    <option value="Transportstrejk">Transportstrejk</option>
+                                </optgroup>
+
+                                <optgroup label="Tävlingar & Evenemang">
+                                    <option value="Idrottstävling">Idrottstävling</option>
+                                    <option value="Kulturevenemang">Kulturevenemang (t.ex. konsert, teater, uppträdande)</option>
+                                    <option value="Representationsuppdrag">Representationsuppdrag för skolan</option>
+                                </optgroup>
+
+                                <optgroup label="Övrigt">
+                                    <option value="Försovning">Försovning</option>
+                                    <option value="Annat planerat frånvaro">Annat planerad frånvaro</option>
+                                    <option value="Tekniska problem">Tekniska problem (t.ex. dator eller internet)</option>
+                                    <option value="Okänd orsak">Okänd orsak</option>
+                                    <option value="Övrigt">Övrigt</option>
+                                </optgroup>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Tid</label>
+                            <div class="hours-input-group">
+                                <div class="hours-input">
+                                    <label for="schoolHours" class="form-label">Timmar i skolan</label>
+                                    <input type="number" class="form-control" id="schoolHours" min="0" max="8" step="0.5" value="0">
+                                </div>
+                                <div class="hours-input">
+                                    <label for="homeHours" class="form-label">Timmar hemma</label>
+                                    <input type="number" class="form-control" id="homeHours" min="0" max="8" step="0.5" value="8" readonly>
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <small class="text-muted">Totalt: <span class="hours-display" id="totalHours">8</span> timmar (hel dag)</small>
+                            </div>
+                        </div>
                         <div class="mb-3">
                             <label for="absenceNotes" class="form-label">Anteckningar</label>
-                            <textarea class="form-control" id="absenceNotes" rows="3"></textarea>
+                            <textarea class="form-control" id="absenceNotes" rows="3" placeholder="Lägg till ytterligare information om frånvaron..."></textarea>
                         </div>
                     </form>
                 </div>
@@ -616,29 +712,68 @@
                             <option value="all">Alla år</option>
                         </select>
                     </div>
-					<div class="mb-3">
-						<label for="exportReasonFilter" class="form-label">Orsak</label>
-						<select id="exportReasonFilter" class="form-select">
-							<option value="all">Alla orsaker</option>
-							<option value="Förkylning">Förkylning</option>
-							<option value="Familjeskäl">Familjeskäl</option>
-							<option value="Övrigt">Övrigt</option>
-							<option value="Läkarbesök">Läkarbesök</option>
-							<option value="Tandläkarbesök">Tandläkarbesök</option>
-							<option value="Studier">Studier</option>
-							<option value="Resa">Resa</option>
-							<option value="Sjukdom">Sjukdom</option>
-							<option value="Begravning">Begravning</option>
-							<option value="Flytt">Flytt</option>
-						</select>
-					</div>
+                    <div class="mb-3">
+                        <label for="exportReasonFilter" class="form-label">Orsak</label>
+                        <select id="exportReasonFilter" class="form-select">
+                            <option value="all">Alla orsaker</option>
+                            <optgroup label="Hälsa">
+                                <option value="Förkylning">Förkylning</option>
+                                <option value="Sjukdom">Sjukdom</option>
+                                <option value="Läkarbesök">Läkarbesök</option>
+                                <option value="Tandläkarbesök">Tandläkarbesök</option>
+                                <option value="Psykisk ohälsa">Psykisk ohälsa</option>
+                                <option value="Rehabilitering">Rehabilitering</option>
+                                <option value="Vaccination">Vaccination</option>
+                            </optgroup>
 
+                            <optgroup label="Familj & Personliga skäl">
+                                <option value="Familjeskäl">Familjeskäl</option>
+                                <option value="Vård av barn">Vård av barn</option>
+                                <option value="Begravning">Begravning</option>
+                                <option value="Flytt">Flytt</option>
+                                <option value="Religiös högtid">Religiös högtid</option>
+                                <option value="Personliga skäl">Personliga skäl</option>
+                                <option value="Myndighetsärende">Myndighetsärende</option>
+                            </optgroup>
+
+                            <optgroup label="Studier & Skolrelaterat">
+                                <option value="Studier">Studier</option>
+                                <option value="Skolaktivitet">Skolaktivitet</option>
+                                <option value="Nationella prov">Nationella prov</option>
+                                <option value="Projektarbete">Projektarbete</option>
+                                <option value="Distansundervisning">Distansundervisning</option>
+                            </optgroup>
+
+                            <optgroup label="Resor & Logistik">
+                                <option value="Resa">Resa</option>
+                                <option value="Missat tåg/buss">Missat tåg/buss</option>
+                                <option value="Trafikproblem">Trafikproblem</option>
+                                <option value="Snöstorm/väderproblem">Snöstorm/väderproblem</option>
+                                <option value="Transportstrejk">Transportstrejk</option>
+                            </optgroup>
+
+                            <optgroup label="Tävlingar & Evenemang">
+                                <option value="Idrottstävling">Idrottstävling</option>
+                                <option value="Kulturevenemang">Kulturevenemang</option>
+                                <option value="Representationsuppdrag">Representationsuppdrag</option>
+                            </optgroup>
+
+                            <optgroup label="Övrigt">
+                                <option value="Försovning">Försovning</option>
+                                <option value="Annat planerat frånvaro">Annat planerad frånvaro</option>
+                                <option value="Tekniska problem">Tekniska problem</option>
+                                <option value="Okänd orsak">Okänd orsak</option>
+                                <option value="Övrigt">Övrigt</option>
+                            </optgroup>
+                        </select>
+                    </div>
                     <div class="mb-3">
                         <label for="exportSortBy" class="form-label">Sortera efter</label>
                         <select id="exportSortBy" class="form-select">
                             <option value="date">Datum</option>
                             <option value="student">Elev</option>
                             <option value="reason">Orsak</option>
+                            <option value="hours">Timmar</option>
                         </select>
                     </div>
                     <div class="mb-3">
@@ -713,16 +848,16 @@
             document.getElementById('loginForm').addEventListener('submit', login);
             document.getElementById('registerForm').addEventListener('submit', register);
             
+            // Hours calculation listener
+            document.getElementById('schoolHours').addEventListener('input', updateHours);
+            
             // Set current month as default filter
             const now = new Date();
             const currentMonth = now.toISOString().slice(0, 7);
             document.getElementById('monthRangeFilter').value = currentMonth;
             
-            // Set default export date range to current month
-            const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-            const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-            document.getElementById('exportStartDate').valueAsDate = firstDay;
-            document.getElementById('exportEndDate').valueAsDate = lastDay;
+            // Set default export date range to previous month
+            setDefaultExportDates();
             
             // Context menu event listeners
             document.addEventListener('contextmenu', handleContextMenu);
@@ -731,6 +866,15 @@
             // Populate year filter
             populateYearFilter();
         });
+        
+        function setDefaultExportDates() {
+            const now = new Date();
+            const firstDayOfPreviousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            const lastDayOfPreviousMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+            
+            document.getElementById('exportStartDate').valueAsDate = firstDayOfPreviousMonth;
+            document.getElementById('exportEndDate').valueAsDate = lastDayOfPreviousMonth;
+        }
         
         function initApp() {
             // Listen for auth state changes
@@ -914,6 +1058,11 @@
                 option.textContent = student.name;
                 studentDropdown.appendChild(option);
             });
+            
+            // Select first student by default if available
+            if (students.length > 0) {
+                studentDropdown.selectedIndex = 1; // Index 1 because index 0 is the placeholder
+            }
         }
         
         function updateStudentsList(students) {
@@ -1073,6 +1222,8 @@
                         <th>Datum</th>
                         <th>Elev</th>
                         <th>Orsak</th>
+                        <th>Timmar i skolan</th>
+                        <th>Timmar hemma</th>
                         <th>Anteckningar</th>
                         <th>Åtgärder</th>
                     </tr>
@@ -1090,6 +1241,8 @@
                         <td>${formattedDate}</td>
                         <td>${absence.studentName}</td>
                         <td>${absence.reason}</td>
+                        <td>${absence.schoolHours || 0}</td>
+                        <td>${absence.homeHours || 8}</td>
                         <td>${absence.notes || '-'}</td>
                         <td class="action-buttons">
                             <button class="btn btn-sm btn-outline-primary edit-btn" data-id="${absence.id}">
@@ -1231,6 +1384,10 @@
                         valueA = a.reason.toLowerCase();
                         valueB = b.reason.toLowerCase();
                         break;
+                    case 'hours':
+                        valueA = a.homeHours || 8;
+                        valueB = b.homeHours || 8;
+                        break;
                     default:
                         valueA = new Date(a.date);
                         valueB = new Date(b.date);
@@ -1281,6 +1438,24 @@
             return months[month - 1] || '';
         }
         
+        function updateHours() {
+            const schoolHours = parseFloat(document.getElementById('schoolHours').value) || 0;
+            const homeHours = 8 - schoolHours;
+            
+            document.getElementById('homeHours').value = homeHours;
+            document.getElementById('totalHours').textContent = 8;
+            
+            // Update display text
+            const totalDisplay = document.getElementById('totalHours');
+            if (schoolHours === 0) {
+                totalDisplay.textContent = '8 (hel dag)';
+            } else if (schoolHours === 8) {
+                totalDisplay.textContent = '0 (ingen frånvaro)';
+            } else {
+                totalDisplay.textContent = `${homeHours} (del frånvaro)`;
+            }
+        }
+        
         function openAddAbsenceModal() {
             if (!currentUser) {
                 showToast('Du måste logga in för att lägga till frånvaro', 'warning');
@@ -1291,6 +1466,20 @@
             document.getElementById('absenceForm').reset();
             document.getElementById('absenceId').value = '';
             document.getElementById('absenceDate').valueAsDate = new Date();
+            
+            // Reset hours to default
+            document.getElementById('schoolHours').value = 0;
+            document.getElementById('homeHours').value = 8;
+            document.getElementById('totalHours').textContent = '8 (hel dag)';
+            
+            // Set default student if available
+            const studentDropdown = document.getElementById('studentName');
+            if (studentDropdown.options.length > 1) {
+                studentDropdown.selectedIndex = 1; // Index 1 because index 0 is the placeholder
+            }
+            
+            // Set default reason to empty (showing placeholder)
+            document.getElementById('absenceReason').selectedIndex = 0;
             
             const modal = new bootstrap.Modal(document.getElementById('absenceModal'));
             modal.show();
@@ -1311,6 +1500,11 @@
                         document.getElementById('absenceReason').value = absence.reason;
                         document.getElementById('absenceNotes').value = absence.notes || '';
                         
+                        // Set hours
+                        document.getElementById('schoolHours').value = absence.schoolHours || 0;
+                        document.getElementById('homeHours').value = absence.homeHours || 8;
+                        updateHours();
+                        
                         const modal = new bootstrap.Modal(document.getElementById('absenceModal'));
                         modal.show();
                     }
@@ -1330,6 +1524,8 @@
             const studentName = document.getElementById('studentName').value;
             const date = document.getElementById('absenceDate').value;
             const reason = document.getElementById('absenceReason').value;
+            const schoolHours = parseFloat(document.getElementById('schoolHours').value) || 0;
+            const homeHours = parseFloat(document.getElementById('homeHours').value) || 8;
             const notes = document.getElementById('absenceNotes').value;
             
             if (!studentName || !date || !reason) {
@@ -1341,6 +1537,8 @@
                 studentName,
                 date,
                 reason,
+                schoolHours,
+                homeHours,
                 notes
             };
             
@@ -1384,10 +1582,11 @@
         }
         
         function updateStatistics(absences) {
-            // Total absences
-            document.getElementById('totalAbsences').textContent = absences.length;
+            // Total absence hours
+            const totalHours = absences.reduce((sum, absence) => sum + (absence.homeHours || 8), 0);
+            document.getElementById('totalAbsences').textContent = totalHours.toFixed(1);
             
-            // Current month absences
+            // Current month absence hours
             const now = new Date();
             const currentMonth = now.getMonth() + 1;
             const currentYear = now.getFullYear();
@@ -1397,13 +1596,16 @@
                 return date.getMonth() + 1 === currentMonth && date.getFullYear() === currentYear;
             });
             
-            document.getElementById('monthAbsences').textContent = monthAbsences.length;
+            const monthHours = monthAbsences.reduce((sum, absence) => sum + (absence.homeHours || 8), 0);
+            document.getElementById('monthAbsences').textContent = monthHours.toFixed(1);
             
-            // Sickness absences
-            const sicknessAbsences = absences.filter(a => a.reason === 'Förkylning');
-            document.getElementById('sicknessAbsences').textContent = sicknessAbsences.length;
+            // Health-related absence hours
+            const healthReasons = ['Förkylning', 'Sjukdom', 'Läkarbesök', 'Tandläkarbesök', 'Psykisk ohälsa', 'Rehabilitering', 'Vaccination'];
+            const sicknessAbsences = absences.filter(a => healthReasons.includes(a.reason));
+            const sicknessHours = sicknessAbsences.reduce((sum, absence) => sum + (absence.homeHours || 8), 0);
+            document.getElementById('sicknessAbsences').textContent = sicknessHours.toFixed(1);
             
-            // Term absences (assuming term is from August to June)
+            // Term absence hours (assuming term is from August to June)
             const currentTermAbsences = absences.filter(a => {
                 const date = new Date(a.date);
                 const year = date.getFullYear();
@@ -1419,7 +1621,8 @@
                 return false;
             });
             
-            document.getElementById('termAbsences').textContent = currentTermAbsences.length;
+            const termHours = currentTermAbsences.reduce((sum, absence) => sum + (absence.homeHours || 8), 0);
+            document.getElementById('termAbsences').textContent = termHours.toFixed(1);
         }
         
         function updateCharts(absences) {
@@ -1430,28 +1633,34 @@
         function updateReasonChart(absences) {
             const ctx = document.getElementById('reasonChart').getContext('2d');
             
-			// Count absences by reason
-			const reasons = {
-				'Förkylning': 0,
-				'Familjeskäl': 0,
-				'Övrigt': 0,
-				'Läkarbesök': 0,
-				'Tandläkarbesök': 0,
-				'Studier': 0,
-				'Resa': 0,
-				'Sjukdom': 0,
-				'Begravning': 0,
-				'Flytt': 0
-			};
-
+            // Define all reason categories
+            const reasonCategories = {
+                'Hälsa': ['Förkylning', 'Sjukdom', 'Läkarbesök', 'Tandläkarbesök', 'Psykisk ohälsa', 'Rehabilitering', 'Vaccination'],
+                'Familj & Personliga skäl': ['Familjeskäl', 'Vård av barn', 'Begravning', 'Flytt', 'Religiös högtid', 'Personliga skäl', 'Myndighetsärende'],
+                'Studier & Skolrelaterat': ['Studier', 'Skolaktivitet', 'Nationella prov', 'Projektarbete', 'Distansundervisning'],
+                'Resor & Logistik': ['Resa', 'Missat tåg/buss', 'Trafikproblem', 'Snöstorm/väderproblem', 'Transportstrejk'],
+                'Tävlingar & Evenemang': ['Idrottstävling', 'Kulturevenemang', 'Representationsuppdrag'],
+                'Övrigt': ['Försovning', 'Annat planerat frånvaro', 'Tekniska problem', 'Okänd orsak', 'Övrigt']
+            };
             
-            absences.forEach(absence => {
-                if (reasons.hasOwnProperty(absence.reason)) {
-                    reasons[absence.reason]++;
-                } else {
-                    reasons['Övrigt']++;
-                }
-            });
+            // Calculate hours for each category
+            const categoryData = {};
+            const categoryColors = [
+                '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'
+            ];
+            
+            let colorIndex = 0;
+            for (const [category, reasons] of Object.entries(reasonCategories)) {
+                const categoryHours = absences
+                    .filter(a => reasons.includes(a.reason))
+                    .reduce((sum, absence) => sum + (absence.homeHours || 8), 0);
+                
+                categoryData[category] = {
+                    hours: categoryHours,
+                    color: categoryColors[colorIndex % categoryColors.length]
+                };
+                colorIndex++;
+            }
             
             // Destroy previous chart if it exists
             if (reasonChart) {
@@ -1462,33 +1671,11 @@
             reasonChart = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
-                    labels: Object.keys(reasons),
+                    labels: Object.keys(categoryData),
                     datasets: [{
-                        data: Object.values(reasons),
-                        backgroundColor: [
-                            '#FF6384',
-                            '#36A2EB',
-                            '#FFCE56',
-                            '#4BC0C0',
-                            '#9966FF',
-                            '#FF9F40',
-                            '#FF6384',
-                            '#C9CBCF',
-                            '#4BC0C0',
-                            '#FFCD56'
-                        ],
-                        hoverBackgroundColor: [
-                            '#FF6384',
-                            '#36A2EB',
-                            '#FFCE56',
-                            '#4BC0C0',
-                            '#9966FF',
-                            '#FF9F40',
-                            '#FF6384',
-                            '#C9CBCF',
-                            '#4BC0C0',
-                            '#FFCD56'
-                        ]
+                        data: Object.values(categoryData).map(item => item.hours),
+                        backgroundColor: Object.values(categoryData).map(item => item.color),
+                        hoverBackgroundColor: Object.values(categoryData).map(item => item.color)
                     }]
                 },
                 options: {
@@ -1497,7 +1684,7 @@
                     plugins: {
                         title: {
                             display: true,
-                            text: 'Frånvaro efter orsak'
+                            text: 'Frånvaro efter orsak (timmar)'
                         },
                         legend: {
                             position: 'bottom'
@@ -1522,13 +1709,13 @@
                 monthlyData[key] = 0;
             }
             
-            // Count absences per month
+            // Sum hours per month
             absences.forEach(absence => {
                 const date = new Date(absence.date);
                 const key = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
                 
                 if (monthlyData.hasOwnProperty(key)) {
-                    monthlyData[key]++;
+                    monthlyData[key] += (absence.homeHours || 8);
                 }
             });
             
@@ -1551,7 +1738,7 @@
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'Antal frånvaron',
+                        label: 'Timmar frånvaro',
                         data: data,
                         backgroundColor: 'rgba(63, 81, 181, 0.2)',
                         borderColor: 'rgba(63, 81, 181, 1)',
@@ -1566,7 +1753,7 @@
                     plugins: {
                         title: {
                             display: true,
-                            text: 'Månatlig trend'
+                            text: 'Månatlig trend (timmar)'
                         }
                     },
                     scales: {
@@ -1659,6 +1846,9 @@
                 confirmBtn.textContent = 'Visa';
             }
             
+            // Set default dates to previous month
+            setDefaultExportDates();
+            
             const modal = new bootstrap.Modal(document.getElementById('exportModal'));
             modal.show();
         }
@@ -1722,34 +1912,49 @@
             // Add title
             doc.setFontSize(18);
             doc.text('Frånvarorapport', 105, 15, { align: 'center' });
-            doc.setFontSize(12);
-            doc.text(`Genererad: ${new Date().toLocaleDateString('sv-SE')}`, 105, 25, { align: 'center' });
             
-            // Get filter information
+            // Add user information and period
+            doc.setFontSize(10);
+            doc.setTextColor(60, 60, 60);
+            
             const startDate = document.getElementById('exportStartDate').value;
             const endDate = document.getElementById('exportEndDate').value;
+            
+            // Format dates
+            const formattedStartDate = formatDateShort(startDate);
+            const formattedEndDate = formatDateShort(endDate);
+            
+            // Add user info and period
+            if (currentUser && currentUser.displayName) {
+                doc.text(`Användare: ${currentUser.displayName}`, 14, 25);
+            } else {
+                doc.text(`Användare: ${currentUser ? currentUser.email : 'Okänd'}`, 14, 25);
+            }
+            
+            doc.text(`Period: ${formattedStartDate} - ${formattedEndDate}`, 190, 25, { align: 'right' });
+            
+            // Add generation date
+            doc.text(`Genererad: ${formatDateShort(new Date().toISOString().split('T')[0])}`, 190, 32, { align: 'right' });
+            
+            // Get filter information
             const yearFilter = document.getElementById('exportYearFilter').value;
             const reasonFilter = document.getElementById('exportReasonFilter').value;
             
             // Add filter information
             let filterText = 'Filter: ';
-            if (startDate && endDate) {
-                filterText += `Period: ${startDate} - ${endDate}`;
-            }
             if (yearFilter !== 'all') {
-                filterText += filterText.length > 7 ? `, År: ${yearFilter}` : `År: ${yearFilter}`;
+                filterText += `År: ${yearFilter}`;
             }
             if (reasonFilter !== 'all') {
                 filterText += filterText.length > 7 ? `, Orsak: ${reasonFilter}` : `Orsak: ${reasonFilter}`;
             }
             
             if (filterText.length > 7) {
-                doc.setFontSize(10);
-                doc.text(filterText, 14, 35);
+                doc.text(filterText, 14, 32);
             }
             
             // Initialize variables for table rendering
-            let y = filterText.length > 7 ? 45 : 35;
+            let y = 45;
             const pageHeight = doc.internal.pageSize.height;
             const rowHeight = 10;
             
@@ -1766,9 +1971,11 @@
             doc.setFontSize(10);
             doc.setFont(undefined, 'bold');
             doc.text('Datum', 14, y);
-            doc.text('Elev', 50, y);
-            doc.text('Orsak', 100, y);
-            doc.text('Anteckningar', 140, y);
+            doc.text('Elev', 40, y);
+            doc.text('Orsak', 70, y);
+            doc.text('Timmar i skolan', 110, y);
+            doc.text('Timmar hemma', 140, y);
+            doc.text('Anteckningar', 170, y);
             doc.setFont(undefined, 'normal');
             
             y += rowHeight;
@@ -1787,9 +1994,11 @@
                     doc.setFontSize(10);
                     doc.setFont(undefined, 'bold');
                     doc.text('Datum', 14, y);
-                    doc.text('Elev', 50, y);
-                    doc.text('Orsak', 100, y);
-                    doc.text('Anteckningar', 140, y);
+                    doc.text('Elev', 40, y);
+                    doc.text('Orsak', 70, y);
+                    doc.text('Timmar i skolan', 110, y);
+                    doc.text('Timmar hemma', 140, y);
+                    doc.text('Anteckningar', 170, y);
                     doc.setFont(undefined, 'normal');
                     
                     y += rowHeight;
@@ -1797,23 +2006,25 @@
                 }
                 
                 const date = new Date(absence.date);
-                const formattedDate = date.toLocaleDateString('sv-SE');
+                const formattedDate = formatDateShort(absence.date);
                 
                 // Split notes into multiple lines if too long
                 const notes = absence.notes || '-';
-                const splitNotes = doc.splitTextToSize(notes, 40);
+                const splitNotes = doc.splitTextToSize(notes, 30);
                 
                 // Calculate row height based on notes
                 const currentRowHeight = rowHeight * Math.max(1, splitNotes.length);
                 
                 // Add row data
                 doc.text(formattedDate, 14, y);
-                doc.text(absence.studentName, 50, y);
-                doc.text(absence.reason, 100, y);
+                doc.text(absence.studentName, 40, y);
+                doc.text(absence.reason, 70, y);
+                doc.text((absence.schoolHours || 0).toString(), 110, y);
+                doc.text((absence.homeHours || 8).toString(), 140, y);
                 
                 // Add notes with multiple lines if needed
                 for (let i = 0; i < splitNotes.length; i++) {
-                    doc.text(splitNotes[i], 140, y + (i * rowHeight));
+                    doc.text(splitNotes[i], 170, y + (i * rowHeight));
                 }
                 
                 y += currentRowHeight + 2;
@@ -1828,13 +2039,19 @@
                 y = 20;
             }
             
+            const totalHours = absences.reduce((sum, absence) => sum + (absence.homeHours || 8), 0);
             doc.setFontSize(12);
             doc.setFont(undefined, 'bold');
-            doc.text(`Sammanfattning: ${absences.length} frånvaroregister`, 14, y);
+            doc.text(`Sammanfattning: ${absences.length} frånvaroregister, totalt ${totalHours.toFixed(1)} timmar`, 14, y);
             
             // Save the PDF
             doc.save('franvaro_rapport.pdf');
             showToast('PDF-rapport genererad!', 'success');
+        }
+        
+        function formatDateShort(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('sv-SE');
         }
         
 		function showAbsencesOnScreen(absences) {
@@ -1848,16 +2065,23 @@
 				// Crear contenido HTML
 				let html = `
 					<h1 style="text-align:center; color: #3f51b5;">Frånvarorapport</h1>
+					<div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+						<div>
+							<strong>Användare:</strong> ${currentUser ? (currentUser.displayName || currentUser.email) : 'Okänd'}
+						</div>
+						<div>
+							<strong>Period:</strong> ${formatDateShort(startDate)} - ${formatDateShort(endDate)}
+						</div>
+					</div>
 					<p style="text-align:center; font-size: 1.1rem;">Genererad: ${new Date().toLocaleDateString('sv-SE')}</p>
 				`;
 
 				// Agregar información de filtros
 				let filterText = '';
-				if (startDate || endDate || yearFilter !== 'all' || reasonFilter !== 'all') {
+				if (yearFilter !== 'all' || reasonFilter !== 'all') {
 					filterText = '<div style="margin-bottom: 20px; padding: 10px; background-color: #f8f9fa; border-radius: 5px;"><strong>Filter:</strong> ';
-					if (startDate && endDate) filterText += `Period: ${startDate} - ${endDate}`;
-					if (yearFilter !== 'all') filterText += filterText.includes('Period') ? `, År: ${yearFilter}` : `År: ${yearFilter}`;
-					if (reasonFilter !== 'all') filterText += filterText.includes('Period') || filterText.includes('År') ? `, Orsak: ${reasonFilter}` : `Orsak: ${reasonFilter}`;
+					if (yearFilter !== 'all') filterText += `År: ${yearFilter}`;
+					if (reasonFilter !== 'all') filterText += filterText.includes('År') ? `, Orsak: ${reasonFilter}` : `Orsak: ${reasonFilter}`;
 					filterText += '</div>';
 					html += filterText;
 				}
@@ -1877,6 +2101,8 @@
 									<th>Datum</th>
 									<th>Elev</th>
 									<th>Orsak</th>
+									<th>Timmar i skolan</th>
+									<th>Timmar hemma</th>
 									<th>Anteckningar</th>
 								</tr>
 							</thead>
@@ -1884,22 +2110,27 @@
 					`;
 					// Agregar filas
 					absences.forEach(absence => {
-						const date = new Date(absence.date).toLocaleDateString('sv-SE');
+						const date = new Date(absence.date);
 						html += `
 							<tr>
-								<td>${date}</td>
+								<td>${formatDateShort(absence.date)}</td>
 								<td>${absence.studentName}</td>
 								<td>${absence.reason}</td>
+								<td>${absence.schoolHours || 0}</td>
+								<td>${absence.homeHours || 8}</td>
 								<td>${absence.notes || '-'}</td>
 							</tr>
 						`;
 					});
 					html += `</tbody></table>`;
 
+                    // Calcular total de horas
+                    const totalHours = absences.reduce((sum, absence) => sum + (absence.homeHours || 8), 0);
+                    
 					// Agregar resumen
 					html += `
 						<div style="margin-top: 20px; padding: 15px; background-color: #e8f5e9; border-radius: 5px;">
-							<strong>Sammanfattning:</strong> ${absences.length} frånvaroregister
+							<strong>Sammanfattning:</strong> ${absences.length} frånvaroregister, totalt ${totalHours.toFixed(1)} timmar
 						</div>
 					`;
 				}
@@ -2050,17 +2281,17 @@
             
             // Add table
             doc.setFontSize(10);
-            const headers = ['Datum', 'Elev', 'Orsak', 'Anteckningar'];
+            const headers = ['Datum', 'Elev', 'Orsak', 'Timmar i skolan', 'Timmar hemma', 'Anteckningar'];
             let y = 40;
             
             headers.forEach((header, i) => {
-                doc.text(header, 20 + (i * 45), y);
+                doc.text(header, 15 + (i * 30), y);
             });
             
             y += 7;
             
             headers.forEach((header, i) => {
-                doc.text(rowData[i] || '-', 20 + (i * 45), y);
+                doc.text(rowData[i] || '-', 15 + (i * 30), y);
             });
             
             doc.save('franvaro_rapport.pdf');
